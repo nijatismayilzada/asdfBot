@@ -1,0 +1,2 @@
+# asdfBot
+Mankalah game bot
