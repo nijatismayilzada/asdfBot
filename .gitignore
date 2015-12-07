@@ -18,3 +18,8 @@ build.xml
 manifest.mf
 nicat.got
 ramin.got
+
+# IntelliJ project files.
+asdfBot.iml
+.idea
+out
