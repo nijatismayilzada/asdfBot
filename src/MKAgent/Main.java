@@ -55,7 +55,7 @@ public class Main
 	public static void main(String[] args)
 	{
 		try {
-          AsdfBot asdf = new AsdfBot();
+          AsdfBot asdf = new AsdfBot(7, 7);
           asdf.doMagic();
         }
         catch(Exception e) {
