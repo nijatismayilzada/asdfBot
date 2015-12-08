@@ -49,6 +49,7 @@ public class AsdfBot {
               for (int i=1; i<8;i++){
                 if(Kalah.isLegalMove(thisBoard, (Move) new Move(ourSide, i))){
                   Kalah.makeMove((Board)thisBoard, (Move)new Move(ourSide, i));
+                  Main.sendMsg(Protocol.createMoveMsg(i));
                 }
               }
               System.err.println("This was the move: " + r.move);
