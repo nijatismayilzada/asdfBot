@@ -54,6 +54,12 @@ public class Main
 	 */
 	public static void main(String[] args)
 	{
-		// TODO: implement
+		try {
+          AsdfBot asdf = new AsdfBot();
+          asdf.doMagic();
+        }
+        catch(Exception e) {
+          System.err.println("No no no... " + e.getMessage());
+        }
 	}
 }
