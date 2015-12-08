@@ -5,7 +5,7 @@ import java.io.IOException;
 public class AsdfBot {
 	
   private Kalah kalah;
-  protected Side ourSide;
+  protected Side ourSide = Side.SOUTH;
   
   public AsdfBot(int holes, int seeds){
     this.kalah = new Kalah(new Board(holes, seeds));
@@ -42,8 +42,15 @@ public class AsdfBot {
               break;
 
             case STATE:
+              
               System.err.println("A state...");
               Protocol.MoveTurn r = Protocol.interpretStateMsg(s, kalah.getBoard());
+              Board thisBoard = new Board(this.kalah.getBoard());
+              for (int i=1; i<8;i++){
+                if(Kalah.isLegalMove(thisBoard, (Move) new Move(ourSide, i))){
+                  Kalah.makeMove((Board)thisBoard, (Move)new Move(ourSide, i));
+                }
+              }
               System.err.println("This was the move: " + r.move);
               System.err.println("Is the game over?: " + r.end);
               if (!r.end) System.err.println("Is it our turn again? " + r.again);
