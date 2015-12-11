@@ -3,11 +3,11 @@ package MKAgent;
 import java.io.IOException;
 
 public class AsdfBot {
-	
-  private Kalah kalah;
+
+  private Kalah  kalah;
   protected Side ourSide = Side.SOUTH;
-  
-  public AsdfBot(int holes, int seeds){
+
+  public AsdfBot(int holes, int seeds) {
     this.kalah = new Kalah(new Board(holes, seeds));
   }
 
@@ -27,34 +27,45 @@ public class AsdfBot {
               System.err.println("A start...");
               boolean first = Protocol.interpretStartMsg(s);
               System.err.println("Starting player? " + first);
-              if(first){
+              if (first) {
                 ourSide = Side.SOUTH;
                 Main.sendMsg(Protocol.createMoveMsg(1));
                 Board moveBoard = new Board(this.kalah.getBoard());
-                Kalah.makeMove((Board)moveBoard, (Move)new Move(ourSide, 1));
-              }
-              else{
+                Kalah.makeMove((Board) moveBoard, (Move) new Move(ourSide, 1));
+              } else {
                 ourSide = Side.NORTH;
                 Main.sendMsg(Protocol.createSwapMsg());
                 ourSide = Side.SOUTH;
               }
-              
               break;
 
             case STATE:
-              
               System.err.println("A state...");
-              Protocol.MoveTurn r = Protocol.interpretStateMsg(s, kalah.getBoard());
-              Board thisBoard = new Board(this.kalah.getBoard());
-              for (int i=1; i<8;i++){
-                if(Kalah.isLegalMove(thisBoard, (Move) new Move(ourSide, i))){
-                  Kalah.makeMove((Board)thisBoard, (Move)new Move(ourSide, i));
-                  Main.sendMsg(Protocol.createMoveMsg(i));
-                }
+              Protocol.MoveTurn r = Protocol.interpretStateMsg(s,
+                  kalah.getBoard());
+              if (r.again) {
+
+              } else {
+
               }
+              Board thisBoard = new Board(this.kalah.getBoard());
+
+              if (r.move != -1) {
+                kalah.makeMove(new Move(ourSide, r.move));
+              }
+
+              Move newMove;
+              int i = 1;
+              while (!Kalah.isLegalMove(thisBoard, new Move(ourSide, i))) {
+                i++;
+              }
+              Kalah.makeMove((Board) thisBoard, new Move(ourSide, i));
+              Main.sendMsg(Protocol.createMoveMsg(i));
+              i = 1;
               System.err.println("This was the move: " + r.move);
               System.err.println("Is the game over?: " + r.end);
-              if (!r.end) System.err.println("Is it our turn again? " + r.again);
+              if (!r.end)
+                System.err.println("Is it our turn again? " + r.again);
               System.err.println("The board:\n" + kalah.getBoard());
               break;
 
@@ -65,11 +76,10 @@ public class AsdfBot {
         } catch (InvalidMessageException e) {
           System.err.println("InvalidMessageException: " + e.getMessage());
         }
-
       }
 
     } catch (IOException e) {
-      System.err.println("IOException: " + e.getMessage());
+      System.err.println("IOEx ception: " + e.getMessage());
     }
   }
 
