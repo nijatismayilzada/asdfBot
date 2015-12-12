@@ -60,9 +60,8 @@ public class Main
 	{
 	  try {
 	      System.setErr(new PrintStream(new FileOutputStream(new File("/tmp/asdfBot.log"), true)));
-
 	      AsdfBot asdf = new AsdfBot(7, 7);
-          asdf.doMagic();
+          asdf.doRamin();
         }
         catch(Exception e) {
           System.err.println("No no no... " + e.getMessage());

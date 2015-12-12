@@ -4,22 +4,101 @@ import java.io.IOException;
 
 public class AsdfBot {
 
-  private Kalah  kalah;
-  protected Side ourSide = Side.SOUTH;
+  private Kalah      asdfKalah;
+  private Side       ourSide;
+  private int        lastPlayer;
+  private static int ASDFBOT  = 1;
+  private static int OPPONENT = 0;
+  private int        holes;
+  private int        seeds;
 
   public AsdfBot(int holes, int seeds) {
-    this.kalah = new Kalah(new Board(holes, seeds));
+    this.asdfKalah = new Kalah(new Board(holes, seeds));
+    this.holes = holes;
+    this.seeds = seeds;
   }
 
-  //TODO: Nijat
+  public AsdfBot(AsdfBot original) {
+    this(original.getHoleCapacity(), original.getSeedCapacity());
+    // no defensive copies are created here, since
+    // there are no mutable object fields (String is immutable)
+  }
+
+  public int getHoleCapacity() {
+    return this.holes;
+  }
+
+  public int getSeedCapacity() {
+    return this.seeds;
+  }
+
+  public Kalah getAsdf() {
+    return asdfKalah;
+  }
+
+  public void setAsdf(int holes, int seeds) {
+    this.asdfKalah = new Kalah(new Board(holes, seeds));
+  }
+
+  public Side getOurSide() {
+    return this.ourSide;
+  }
+
+  public void setOurSide(Side ourSide) {
+    this.ourSide = ourSide;
+  }
+
+  public int getLastPlayer() {
+    return lastPlayer;
+  }
+
+  public void setLastPlayer(int lastPlayer) {
+    this.lastPlayer = lastPlayer;
+  }
+
   private int rightMove(boolean canSwap) {
-    if(canSwap);
-      //consider swap in tree as well
-    return 0;
+    int maxValue = Integer.MIN_VALUE;
+    int bestMove = 0;
+    if (!canSwap) {
+      for (int i = 1; i <= 7; i++) {
+        AsdfBot tempKalah = new AsdfBot(this);
+        if (tempKalah.getAsdf().isLegalMove(new Move(this.getOurSide(), i))) {
+          tempKalah.getAsdf().makeMove(new Move(this.getOurSide(), i));
+          int newValue = heuristics(tempKalah.getAsdf().getBoard());
+          if (newValue > maxValue) {
+            maxValue = newValue;
+            bestMove = i;
+          }
+        }
+      }
+    } else {
+      for (int i = 0; i <= 7; i++) {
+        if (i == 0) {
+          swap();
+          int newValue = heuristics(this.getAsdf().getBoard());
+          if (newValue > maxValue) {
+            maxValue = newValue;
+            bestMove = -1;
+          }
+          swap();
+        } else {
+          AsdfBot tempKalah = new AsdfBot(this);
+          if (tempKalah.getAsdf().isLegalMove(new Move(this.getOurSide(), i))) {
+            tempKalah.getAsdf().makeMove(new Move(this.getOurSide(), i));
+            int newValue = heuristics(tempKalah.getAsdf().getBoard());
+            if (newValue > maxValue) {
+              maxValue = newValue;
+              bestMove = i;
+            }
+          }
+        }
+      }
+    }
+    return bestMove;
   }
 
   private void swap() {
-    ourSide = ourSide.opposite();
+    this.ourSide = ourSide.opposite();
   }
 
   private int heuristics(Board board) {
@@ -34,7 +113,33 @@ public class AsdfBot {
     return diff;
   }
 
-  public void doMagic() {
+  private void updateBoard(Protocol.MoveTurn gameMessage) {
+    if (this.getLastPlayer() == ASDFBOT) {
+      if (gameMessage.move != -1) {
+        System.err.println("Last turn was ASDFBOT's turn with move: "
+            + gameMessage.move);
+        this.getAsdf().makeMove(new Move(this.getOurSide(), gameMessage.move));
+      } else {
+        // This actually doesn't happen. Game engine doesn't show our swap
+        // message to us.
+        System.err.println("Last turn was ASDFBOT's turn with swap");
+        swap();
+      }
+    } else {
+      if (gameMessage.move != -1) {
+        System.err.println("Last turn was Opponent's turn with move: "
+            + gameMessage.move);
+        this.getAsdf().makeMove(
+            new Move(this.getOurSide().opposite(), gameMessage.move));
+      } else {
+        System.err.println("Last turn was Opponent's turn with swap");
+        swap();
+      }
+    }
+
+  }
+
+  public void doRamin() {
     try {
       String s;
       // canSwap boolean being true if our bot is in north side
@@ -48,85 +153,66 @@ public class AsdfBot {
           MsgType mt = Protocol.getMessageType(s);
           switch (mt) {
             case START:
-              System.err.println("A start...");
               // if true, our bot starts first
               boolean first = Protocol.interpretStartMsg(s);
-              System.err.println("Starting player? " + first);
+              System.err.println("ASDFBOT is starting: " + first);
               if (first) {
-                ourSide = Side.SOUTH;
-                Main.sendMsg(Protocol.createMoveMsg(1));
-                Board moveBoard = new Board(this.kalah.getBoard());
-                Kalah.makeMove((Board) moveBoard, (Move) new Move(ourSide, 1));
-              }
-              else {
-                ourSide = Side.NORTH;
+                this.setOurSide(Side.SOUTH);
+                this.setLastPlayer(ASDFBOT);
+
+                int i = rightMove(canSwap);
+                s = Protocol.createMoveMsg(i);
+                System.err.println("Our start move: " + i);
+                this.getAsdf().makeMove(new Move(ourSide, i));
+                Main.sendMsg(s);
+
+              } else {
+                this.setOurSide(Side.NORTH);
+                this.setLastPlayer(OPPONENT);
                 canSwap = true;
-                //Main.sendMsg(Protocol.createSwapMsg());
-                //ourSide = Side.SOUTH;
               }
               break;
+
             case STATE:
-              System.err.println("A state...");
-              Protocol.MoveTurn r = Protocol.interpretStateMsg(s,
-                  kalah.getBoard());
-              if (r.again) {
+              Protocol.MoveTurn gameMessage = Protocol.interpretStateMsg(s,
+                  this.getAsdf().getBoard());
+
+              updateBoard(gameMessage);
+              System.err.println("The board:\n" + this.getAsdf().getBoard());
+              System.err.println("ASDFBOT's turn: " + gameMessage.again);
+
+              if (gameMessage.again) {
+                int i = rightMove(canSwap);
+                // if best right move send -1
+                if (i == -1) {
+                  s = Protocol.createSwapMsg();
+                  swap();
+                } else {
+                  s = Protocol.createMoveMsg(i);
+                }
+                canSwap = false;
+                this.setLastPlayer(ASDFBOT);
+                Main.sendMsg(s);
+              } else {
+                this.setLastPlayer(OPPONENT);
+              }
+
+              if (gameMessage.end) {
 
               } else {
 
               }
-              Board thisBoard = new Board(this.kalah.getBoard());
-
-              if (r.move != -1) {
-                kalah.makeMove(new Move(ourSide, r.move));
-              }
-
-              Move newMove;
-              int i = 1;
-              while (!Kalah.isLegalMove(thisBoard, new Move(ourSide, i))) {
-                i++;
-              }
-              Kalah.makeMove((Board) thisBoard, new Move(ourSide, i));
-              Main.sendMsg(Protocol.createMoveMsg(i));
-              i = 1;
-              if (r.move == -1) {
-                swap();
-              }
-              // TODO: Nijat: Should be done in rightMove method
-//              Board thisBoard = new Board(this.kalah.getBoard());
-//              for (int i=1; i<8;i++){
-//                if(Kalah.isLegalMove(thisBoard, (Move) new Move(ourSide, i))){
-//                  Kalah.makeMove((Board)thisBoard, (Move)new Move(ourSide, i));
-//                  Main.sendMsg(Protocol.createMoveMsg(i));
-//                }
-//              }
-
-              // if best right move send -1
-              int move = rightMove(canSwap);
-
-              // TODO: Update local board - kalah
-              if (move == -1) {
-                swap();
-                s = Protocol.createSwapMsg();
-                canSwap = false;
-              }
-              else {
-                s = Protocol.createMoveMsg(move);
-              }
-              Main.sendMsg(s);
-              System.err.println("This was the move: " + r.move);
-              System.err.println("Is the game over?: " + r.end);
-              if (!r.end)
-                System.err.println("Is it our turn again? " + r.again);
-              System.err.println("The board:\n" + kalah.getBoard());
               break;
 
             case END:
               System.err.println("Bye!");
               return;
+
           }
         } catch (InvalidMessageException e) {
           System.err.println("InvalidMessageException: " + e.getMessage());
         }
+
       }
     } catch (IOException e) {
       System.err.println("IOEx ception: " + e.getMessage());
