@@ -101,11 +101,17 @@ public class AsdfBot {
 //              }
 
               // if best right move send -1
-              if (rightMove(canSwap) == -1) {
+              int move = rightMove(canSwap);
+
+              // TODO: Update local board - kalah
+              if (move == -1) {
                 swap();
                 s = Protocol.createSwapMsg();
+                canSwap = false;
               }
-              canSwap = false;
+              else {
+                s = Protocol.createMoveMsg(move);
+              }
               Main.sendMsg(s);
               System.err.println("This was the move: " + r.move);
               System.err.println("Is the game over?: " + r.end);
