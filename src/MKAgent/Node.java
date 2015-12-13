@@ -52,4 +52,8 @@ public class Node {
   public int getPayoff() {
     return this.payoff;
   }
+
+  public String toString() {
+    return "Legal move: " + this.isLegal() + " moves: " + this.nextMoves.toString();
+  }
 }

@@ -1,15 +1,18 @@
 package MKAgent;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class AsdfBot {
 
   private Kalah    asdfKalah;
   private Side     ourSide;
   private MoveType lastPlayer;
+  private Tree tree;
 
   public AsdfBot(int holes, int seeds) {
     this.asdfKalah = new Kalah(new Board(holes, seeds));
+    this.tree = new Tree(new Node());
   }
 
   public Kalah getAsdf() {
@@ -48,22 +51,51 @@ public class AsdfBot {
       // invert swap to turn the board to its original state
       swap();
     }
+    
+    Node root = tree.getRoot();
+    root.setMoveType(MoveType.ASDFBOT);
+    root.setPayoff(-1);
 
     for (int i = 1; i <= 7; i++) {
       // Check for possible moves, (not swap)
       // Copy original board to temporary board
       Kalah tempKalah = new Kalah(new Board(this.getAsdf().getBoard()));
       // Check the move, do the move and count heuristics
+      Node treeNode = new Node();
+      
       if (tempKalah.isLegalMove(new Move(this.getOurSide(), i))) {
         tempKalah.makeMove(new Move(this.getOurSide(), i));
         System.err.println("Rightmove board:\n" + tempKalah.getBoard());
         int newValue = heuristics(tempKalah.getBoard());
-        if (newValue > maxValue) {
-          maxValue = newValue;
+        
+        treeNode.setPayoff(newValue);
+        treeNode.setLegal(true);
+        treeNode.setMoveType(MoveType.OPPONENT);
+        
+//        if (newValue > maxValue) {
+//          maxValue = newValue;
+//          bestMove = i;
+//        }
+      } else {
+        // eger legal deyilse onda illegal set ele, sonra add ele.
+        treeNode.setLegal(false);
+      }
+      root.addNextMove(treeNode);
+    }
+    
+    for(int i = 1; i <= 7; i++) {
+      Node move = root.getNextMove(i -1);
+      System.err.println(move.toString());
+      
+      
+      if(move.isLegal()) {
+        if (move.getPayoff() > maxValue) {
+          maxValue = move.getPayoff();
           bestMove = i;
         }
       }
     }
+    
     return bestMove;
   }
 
