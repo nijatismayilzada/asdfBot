@@ -11,9 +11,18 @@ public class Node {
   private ArrayList<Node> nextMoves;
   private MoveType moveType;
   private int payoff = 0;
+  private boolean isLegal;
 
   public Node() {
     this.nextMoves = new ArrayList<>();
+  }
+
+  public void setLegal(boolean legal) {
+    this.isLegal = legal;
+  }
+
+  public boolean isLegal() {
+    return this.isLegal;
   }
 
   public void setMoveType(MoveType moveType) {
@@ -43,6 +52,4 @@ public class Node {
   public int getPayoff() {
     return this.payoff;
   }
-
-
 }
