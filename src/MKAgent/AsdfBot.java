@@ -53,11 +53,10 @@ public class AsdfBot {
       // Check for possible moves, (not swap)
       // Copy original board to temporary board
       Kalah tempKalah = new Kalah(new Board(this.getAsdf().getBoard()));
-      System.err.println("rightmove board1: " + tempKalah.getBoard());
       // Check the move, do the move and count heuristics
       if (tempKalah.isLegalMove(new Move(this.getOurSide(), i))) {
         tempKalah.makeMove(new Move(this.getOurSide(), i));
-        System.err.println("rightmove board2: " + tempKalah.getBoard());
+        System.err.println("Rightmove board:\n" + tempKalah.getBoard());
         int newValue = heuristics(tempKalah.getBoard());
         if (newValue > maxValue) {
           maxValue = newValue;
@@ -106,9 +105,8 @@ public class AsdfBot {
             // Get best move
             int i = rightMove(canSwap);
             s = Protocol.createMoveMsg(i);
-            System.err.println("Our start move: " + i);
+            System.err.println("Asdf start decision: " + i);
             Main.sendMsg(s);
-
           } else {
             // Set opponent side and last player
             this.setOurSide(Side.NORTH);
@@ -124,7 +122,12 @@ public class AsdfBot {
               .getAsdf().getBoard());
 
           System.err.println("The board:\n" + this.getAsdf().getBoard());
-          System.err.println("ASDFBOT's turn: " + gameMessage.again);
+          System.err.println("ASDFBOT's turn: " + gameMessage.again + ". Last move: " + gameMessage.move);
+
+          if (gameMessage.move == -1){
+            swap();
+          } else {
+          }
 
           // if this turn is our turn
           if (gameMessage.again) {
