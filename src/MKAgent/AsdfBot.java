@@ -122,8 +122,8 @@ public class AsdfBot {
 
             // Get best move
             //int i = rightMove(canSwap);
-            s = Protocol.createMoveMsg(i);
-            System.err.println("Asdf start decision: " + i);
+            //s = Protocol.createMoveMsg(i);
+            //System.err.println("Asdf start decision: " + i);
             Main.sendMsg(s);
           } else {
             // Set opponent side and last player
