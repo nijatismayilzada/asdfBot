@@ -1,7 +1,6 @@
 package MKAgent;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 public class AsdfBot {
 
@@ -52,7 +51,7 @@ public class AsdfBot {
       swap();
     }
     
-    Node root = tree.getRoot();
+    Node root = new Node();
     root.setMoveType(MoveType.ASDFBOT);
     root.setPayoff(-1);
 
