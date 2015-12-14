@@ -1,13 +1,15 @@
 package MKAgent;
 
-/**
- * Created by rj on 12/12/2015.
- */
 public class Tree {
   private Node root;
 
+  public Tree() {
+    this.root = new Node();
+  }
+
   public Tree(Node root) {
-    this.root = root;
+    this();
+    this.setRoot(root);
   }
 
   public Node getRoot() {
