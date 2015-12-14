@@ -61,43 +61,110 @@ public class AsdfBot {
     this.ourSide = ourSide.opposite();
   }
 
-  private int heuristics(Node node) {
+  /* Heuristic method calculates Evaluation Function for given node and return score.
+     Evaluation Function: w1 * e1 + w2 * e2 + w3 * e3 + w4 * e4 + w5 * e5 where w is weight and e is different
+     evaluation function components (measures)
+     e1 - difference between the number of nodes in each side
+     e2 - difference between the number of free houses in each side
+     e3 - the number of seeds added to store by passing store in a turn
+     e4 - last seed of house added to store in turn (1 or -1 or 0) - has more weights as user will have one
+          more turn to play
+     e5 - the number of seeds added to store by getting nodes from opponent's house - has more weights as user might
+          get more than one seed to store in one turn
+     SPECIAL CASE: if parent's last node of house added to store, and in current turn, some seeds added to
+                   store by getting nodes from opponent's house - change weight from 2 to 50.
+   */
+  private int heuristic(Node node) {
 
-    int ef, w1=1, w2=1, w3=1, w4=2, w5=2, e1, e2, e3, e4, e5;
+    int ef, w1 = 1, w2 = 1, w3 = 1, w4 = 2, w5 = 2, e1 = 0, e2 = 0, e3 = 0, e4 = 0, e5 = 0;
 
-    int ourSeeds = node.getBoard().getSeedsInStore(ourSide);
-    int oppSeeds = node.getBoard().getSeedsInStore(ourSide.opposite());
+    int ourSeedsinStore = node.getBoard().getSeedsInStore(ourSide);
+    int oppSeedsinStore = node.getBoard().getSeedsInStore(ourSide.opposite());
+    int parentOurSeedsinStore = node.getParent().getBoard().getSeedsInStore(ourSide);
+    int parentOppSeedsinStore = node.getParent().getBoard().getSeedsInStore(ourSide);
+    int parentMove = node.getParent().getName();
+    int ourSeedsinHouse = node.getParent().getBoard().getSeeds(ourSide, parentMove);
+    int oppSeedsinHouse = node.getParent().getBoard().getSeeds(ourSide.opposite(), parentMove);
+
+    int ourFreeHouse = 0;
+    int oppFreeHouse = 0;
+    int ourSeeds = ourSeedsinStore;
+    int oppSeeds = oppSeedsinStore;
 
     for (int i = 1; i <= 7; i++) {
       ourSeeds += node.getBoard().getSeeds(ourSide, i);
       oppSeeds += node.getBoard().getSeeds(ourSide.opposite(), i);
-    }
-    e1 = ourSeeds - oppSeeds;
 
-    int ourFreeHouse = 0;
-    int oppFreeHouse = 0;
-
-    for (int i = 1; i <=7; i++) {
       if (node.getBoard().getSeeds(ourSide, i) == 0)
         ourFreeHouse++;
       if (node.getBoard().getSeeds(ourSide.opposite(), i) == 0)
         oppFreeHouse++;
     }
+    e1 = ourSeeds - oppSeeds;
     e2 = ourFreeHouse - oppFreeHouse;
 
-    if (node.getBoard().getSeedsInStore(ourSide) > node.getBoard().getSeedsInStore(ourSide.opposite()))
-      e3 = 1;
-    else
-      e3 = 0;
+    if (node.getParent().getMoveType() == MoveType.ASDFBOT) {
 
-    //TODO: update e4 and e5;
-    if (node.getParent().getName() - node.getParent().getBoard().getSeeds(ourSide, node.getParent().getName()) == 0)
-      e4 = 1;
-    else
-      e4 = 0;
+      if (parentMove + ourSeedsinHouse == 8) {
+        e4 = 1;
+        e3 = 1;
+      }
+      else if (parentMove + ourSeedsinHouse > 8) {
+        e4 = 0;
+        e3 = (parentMove + ourSeedsinHouse) / 8;
+      }
 
-    e5 = 0;
-    ef = e1 + e2 + e3 +e4 + e5;
+      for (int i = 1; i <= 7; i++) {
+        int parentOurSeedsinCurrentHouse = node.getParent().getBoard().getSeeds(ourSide, i);
+        int parentOppSeedsinFrontHouse = node.getParent().getBoard().getSeeds(ourSide.opposite(), 7 - i);
+        int oppSeedsinFrontHouse = node.getBoard().getSeeds(ourSide.opposite(), 7 - i);
+        if (parentOurSeedsinCurrentHouse == 0 && parentOppSeedsinFrontHouse != 0 && oppSeedsinFrontHouse == 0) {
+          if (node.getParent().getParent().getMoveType() == MoveType.ASDFBOT) {
+            w5 = 50;
+            e5 = parentOppSeedsinFrontHouse;
+            break;
+          }
+          e5 = parentOppSeedsinFrontHouse;
+          break;
+        }
+      }
+    }
+    else if (node.getParent().getMoveType() == MoveType.OPPONENT) {
+
+      if (parentMove + oppSeedsinHouse == 8) {
+        e4 = -1;
+        e3 = -1;
+      }
+      else if (parentMove + ourSeedsinHouse > 8) {
+        e4 = 0;
+        e3 = - (parentMove + ourSeedsinHouse) / 8;
+      }
+      for (int i = 1; i <= 7; i++) {
+        int parentOppSeedsinCurrentHouse = node.getParent().getBoard().getSeeds(ourSide.opposite(), i);
+        int parentOurSeedsinFrontHouse = node.getParent().getBoard().getSeeds(ourSide, 7 - i);
+        int oppSeedsinCurrentHouse = node.getBoard().getSeeds(ourSide, 7 - i);
+
+        if (parentOppSeedsinCurrentHouse == 0 && parentOurSeedsinFrontHouse != 0 && oppSeedsinCurrentHouse == 0) {
+          if (node.getParent().getParent().getMoveType() == MoveType.OPPONENT) {
+            w5 = 50;
+            e5 = -parentOurSeedsinFrontHouse;
+            break;
+          }
+          e5 = -parentOurSeedsinFrontHouse;
+          break;
+        }
+      }
+    }
+
+    System.err.println("Difference between the number of nodes in each side: " + e1 );
+    System.err.println("difference between the number of free houses in each side: " + e2 );
+    System.err.println("The number of seeds added to store by passing store in a turn: " + e3 );
+    System.err.println("Last seed of house added to store in turn (1 or -1 or 0): " + e4 );
+    System.err.println("The number of seeds added to store by getting nodes from opponent's house: " + e5 );
+    System.err.println("w5 (if parent's last node of house added to store, and in current turn, some seeds added to " +
+                                  "store by getting nodes from opponent's house - so weight will be 50: " + w5 );
+
+    ef = w1 * e1 + w2 * e2 + w3 * e3 + w4 * e4 + w5 * e5;
     return ef;
   }
 
