@@ -35,20 +35,24 @@ public class AsdfBot {
     this.lastPlayer = lastPlayer;
   }
 
-  //TODO: choose best from current possible moves
   private int rightMove(boolean canSwap, Board board) {
     Node root = new Node(0, board);
     root.setBoard(new Board(this.getAsdf().getBoard()));
+    System.err.println(root.toString());
     tree.setRoot(root);
     assignNodes(root, 1);
+
     int bestMove = 0;
     int maxValue = Integer.MIN_VALUE;
 
 
     for (Node possibleMove : this.tree.getRoot().getNextMoves()) {
-      if (possibleMove.getPayoff() > maxValue)
+      System.err.println("possible moves: " + possibleMove.toString());
+      if (possibleMove.getPayoff() > maxValue) {
         maxValue = possibleMove.getPayoff();
-      bestMove = possibleMove.getName();
+        bestMove = possibleMove.getName();
+        System.err.println("maxValue: " + maxValue + ". Best move: " + bestMove );
+      }
     }
 
     return bestMove;
