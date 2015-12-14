@@ -100,7 +100,6 @@ public class AsdfBot {
     }
   }
 
-
   private void swap() {
     this.ourSide = ourSide.opposite();
   }
@@ -152,9 +151,9 @@ public class AsdfBot {
       if (parentMove + ourSeedsinHouse == 8) {
         e4 = 1;
         e3 = 1;
-      } else if (parentMove + ourSeedsinHouse > 8) {
+      } else if (parentMove + parentOurSeedsinStore > 8) {
         e4 = 0;
-        e3 = (parentMove + ourSeedsinHouse) / 8;
+        e3 = (parentMove + parentOurSeedsinStore) / 8;
       }
 
       for (int i = 1; i <= 7; i++) {
@@ -176,9 +175,9 @@ public class AsdfBot {
       if (parentMove + oppSeedsinHouse == 8) {
         e4 = -1;
         e3 = -1;
-      } else if (parentMove + ourSeedsinHouse > 8) {
+      } else if (parentMove + parentOppSeedsinStore > 8) {
         e4 = 0;
-        e3 = -(parentMove + ourSeedsinHouse) / 8;
+        e3 = -(parentMove + parentOppSeedsinStore) / 8;
       }
       for (int i = 1; i <= 7; i++) {
         int parentOppSeedsinCurrentHouse = node.getParent().getBoard().getSeeds(ourSide.opposite(), i);
