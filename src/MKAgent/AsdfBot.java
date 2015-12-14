@@ -81,7 +81,7 @@ public class AsdfBot {
     int ourSeedsinStore = node.getBoard().getSeedsInStore(ourSide);
     int oppSeedsinStore = node.getBoard().getSeedsInStore(ourSide.opposite());
     int parentOurSeedsinStore = node.getParent().getBoard().getSeedsInStore(ourSide);
-    int parentOppSeedsinStore = node.getParent().getBoard().getSeedsInStore(ourSide);
+    int parentOppSeedsinStore = node.getParent().getBoard().getSeedsInStore(ourSide.opposite());
     int parentMove = node.getParent().getName();
     int ourSeedsinHouse = node.getParent().getBoard().getSeeds(ourSide, parentMove);
     int oppSeedsinHouse = node.getParent().getBoard().getSeeds(ourSide.opposite(), parentMove);
@@ -109,7 +109,7 @@ public class AsdfBot {
         e4 = 1;
         e3 = 1;
       }
-      else if (parentMove + ourSeedsinHouse > 8) {
+      else if (parentMove + parentOurSeedsinStore > 8) {
         e4 = 0;
         e3 = (parentMove + ourSeedsinHouse) / 8;
       }
@@ -135,7 +135,7 @@ public class AsdfBot {
         e4 = -1;
         e3 = -1;
       }
-      else if (parentMove + ourSeedsinHouse > 8) {
+      else if (parentMove + parentOppSeedsinStore > 8) {
         e4 = 0;
         e3 = - (parentMove + ourSeedsinHouse) / 8;
       }
