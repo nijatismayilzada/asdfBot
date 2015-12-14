@@ -8,10 +8,11 @@ public class AsdfBot {
   private Side     ourSide;
   private MoveType lastPlayer;
   private Tree tree;
+  private int depth = 5;
 
   public AsdfBot(int holes, int seeds) {
     this.asdfKalah = new Kalah(new Board(holes, seeds));
-    this.tree = new Tree(new Node());
+    this.tree = new Tree();
   }
 
   public Kalah getAsdf() {
@@ -34,87 +35,73 @@ public class AsdfBot {
     this.lastPlayer = lastPlayer;
   }
 
-  private int rightMove(boolean canSwap) {
-    int maxValue = Integer.MIN_VALUE;
-    int bestMove = 0;
-    if (canSwap) {
-      // do swap
-      swap();
-      // count heuristics
-      int newValue = heuristics(this.getAsdf().getBoard());
-      // compare and set best move
-      if (newValue > maxValue) {
-        maxValue = newValue;
-        bestMove = -1;
-      }
-      // invert swap to turn the board to its original state
-      swap();
-    }
-    
-    Node root = new Node();
-    root.setMoveType(MoveType.ASDFBOT);
-    root.setPayoff(-1);
-
-    for (int i = 1; i <= 7; i++) {
-      // Check for possible moves, (not swap)
-      // Copy original board to temporary board
-      Kalah tempKalah = new Kalah(new Board(this.getAsdf().getBoard()));
-      // Check the move, do the move and count heuristics
-      Node treeNode = new Node();
-      
-      if (tempKalah.isLegalMove(new Move(this.getOurSide(), i))) {
-        tempKalah.makeMove(new Move(this.getOurSide(), i));
-        System.err.println("Rightmove board:\n" + tempKalah.getBoard());
-        int newValue = heuristics(tempKalah.getBoard());
-        
-        treeNode.setPayoff(newValue);
-        treeNode.setLegal(true);
-        treeNode.setMoveType(MoveType.OPPONENT);
-        
-//        if (newValue > maxValue) {
-//          maxValue = newValue;
-//          bestMove = i;
-//        }
-      } else {
-        // eger legal deyilse onda illegal set ele, sonra add ele.
-        treeNode.setLegal(false);
-      }
-      root.addNextMove(treeNode);
-    }
-    
-    for(int i = 1; i <= 7; i++) {
-      Node move = root.getNextMove(i -1);
-      System.err.println(move.toString());
-      
-      
-      if(move.isLegal()) {
-        if (move.getPayoff() > maxValue) {
-          maxValue = move.getPayoff();
-          bestMove = i;
-        }
-      }
-    }
-    
-    return bestMove;
+  //TODO: choose best from current possible moves
+  private int rightMove(boolean canSwap, Board board) {
+    Node root = new Node(0, board);
+    tree.setRoot(root);
+    assignNodes(root, 1);
+    return 0;
   }
+
+  //TODO: build tree more efficiently
+  private void assignNodes(Node currentNode, int currentDepth) {
+
+    if (currentDepth <= depth) {
+      for (Node child : currentNode.getNextMoves()) {
+        assignNodes( child, currentDepth + 1);
+      }
+      //TODO: alphabeta pruning
+    } else {
+      // TODO: calculate heuristic for each node
+    }
+  }
+
 
   private void swap() {
     this.ourSide = ourSide.opposite();
   }
 
-  private int heuristics(Board board) {
-    int ourSeeds = board.getSeedsInStore(ourSide);
-    int oppSeeds = board.getSeedsInStore(ourSide.opposite());
+  private int heuristics(Node node) {
+
+    int ef, w1=1, w2=1, w3=1, w4=2, w5=2, e1, e2, e3, e4, e5;
+
+    int ourSeeds = node.getBoard().getSeedsInStore(ourSide);
+    int oppSeeds = node.getBoard().getSeedsInStore(ourSide.opposite());
 
     for (int i = 1; i <= 7; i++) {
-      ourSeeds += board.getSeeds(ourSide, i);
-      oppSeeds += board.getSeeds(ourSide.opposite(), i);
+      ourSeeds += node.getBoard().getSeeds(ourSide, i);
+      oppSeeds += node.getBoard().getSeeds(ourSide.opposite(), i);
     }
-    int diff = ourSeeds - oppSeeds;
-    return diff;
+    e1 = ourSeeds - oppSeeds;
+
+    int ourFreeHouse = 0;
+    int oppFreeHouse = 0;
+
+    for (int i = 1; i <=7; i++) {
+      if (node.getBoard().getSeeds(ourSide, i) == 0)
+        ourFreeHouse++;
+      if (node.getBoard().getSeeds(ourSide.opposite(), i) == 0)
+        oppFreeHouse++;
+    }
+    e2 = ourFreeHouse - oppFreeHouse;
+
+    if (node.getBoard().getSeedsInStore(ourSide) > node.getBoard().getSeedsInStore(ourSide.opposite()))
+      e3 = 1;
+    else
+      e3 = 0;
+
+    //TODO: update e4 and e5;
+    if (node.getParent().getName() - node.getParent().getBoard().getSeeds(ourSide, node.getParent().getName()) == 0)
+      e4 = 1;
+    else
+      e4 = 0;
+
+    e5 = 0;
+    ef = e1 + e2 + e3 +e4 + e5;
+    return ef;
   }
 
-  public void doRamin() throws InvalidMessageException, IOException {
+  public void cuddleRamin() throws InvalidMessageException, IOException {
     String s;
     MsgType mt;
     // canSwap boolean being true if our bot is in north side
@@ -134,7 +121,7 @@ public class AsdfBot {
             this.setLastPlayer(MoveType.ASDFBOT);
 
             // Get best move
-            int i = rightMove(canSwap);
+            //int i = rightMove(canSwap);
             s = Protocol.createMoveMsg(i);
             System.err.println("Asdf start decision: " + i);
             Main.sendMsg(s);
@@ -163,7 +150,7 @@ public class AsdfBot {
           // if this turn is our turn
           if (gameMessage.again) {
             // Get best move
-            int i = rightMove(canSwap);
+            int i = rightMove(canSwap, this.getAsdf().getBoard());
             System.err.println("Asdf decision: " + i);
 
             // if best right move is -1, it means asdfbot should swap
