@@ -1,12 +1,5 @@
 package MKAgent;
-import java.io.BufferedReader;
-import java.io.EOFException;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.io.Reader;
+import java.io.*;
 
 /**
  * The main application class. It also provides methods for communication
@@ -55,7 +48,7 @@ public class Main
 	 * The main method, invoked when the program is started.
 	 * @param args Command line arguments.
 	 */
-	public static void main(String[] args)
+	public static void main(String[] args) throws FileNotFoundException
 	{
 	  try {
 	      System.setErr(new PrintStream(new FileOutputStream(new File("/tmp/asdfBot.log"), true)));
@@ -63,7 +56,8 @@ public class Main
           asdf.cuddleRamin();
         }
         catch(Exception e) {
-          System.err.println("No no no... " + e.getMessage());
+          System.err.println("No no no... " + e);
+          e.printStackTrace(new PrintStream(new FileOutputStream(new File("/tmp/asdfBot.log"), true)));
         }
 	}
 }

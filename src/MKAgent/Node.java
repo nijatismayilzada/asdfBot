@@ -6,7 +6,6 @@ public class Node {
 
   private int name;
   private Board board;
-  private boolean isLegal;
   private MoveType moveType;
   private int payoff = 0;
   private Node parent;
@@ -26,23 +25,18 @@ public class Node {
     this.setBoard(board);
   }
 
-  public Node(int name, Board board, boolean isLegal) {
+  public Node(int name, Board board, MoveType moveType) {
     this(name, board);
-    this.setLegal(isLegal);
-  }
-
-  public Node(int name, Board board, boolean isLegal, MoveType moveType) {
-    this(name, board, isLegal);
     this.setMoveType(moveType);
   }
 
-  public Node(int name, Board board, boolean isLegal, MoveType moveType, int payoff) {
-    this(name, board, isLegal, moveType);
+  public Node(int name, Board board, MoveType moveType, int payoff) {
+    this(name, board, moveType);
     this.setPayoff(payoff);
   }
 
-  public Node(int name, Board board, boolean isLegal, MoveType moveType, int payoff, Node parent) {
-    this(name, board, isLegal, moveType, payoff);
+  public Node(int name, Board board,  MoveType moveType, int payoff, Node parent) {
+    this(name, board, moveType, payoff);
     this.setParent(parent);
   }
 
@@ -68,14 +62,6 @@ public class Node {
 
   public void setName(int name) {
     this.name = name;
-  }
-
-  public void setLegal(boolean legal) {
-    this.isLegal = legal;
-  }
-
-  public boolean isLegal() {
-    return this.isLegal;
   }
 
   public void setMoveType(MoveType moveType) {
@@ -113,8 +99,8 @@ public class Node {
 
   @Override
   public String toString() {
-    return "Node -> name: " + this.getName() + " / isMoveLegal: " + this.isLegal() + " / Payoff: " + this.getPayoff()
-        + " / moveType: " + this.getMoveType() + " / parentName: " + this.getParent().getName() + " / nextMoves: "
+    return "Node -> name: " + this.getName() + " / Payoff: " + this.getPayoff()
+        + " / moveType: " + this.getMoveType() + " / nextMoves: "
         + this.getNextMoves().toString();
   }
 }

@@ -37,8 +37,8 @@ public class AsdfBot {
 
   private int rightMove(boolean canSwap, Board board) {
     Node root = new Node(0, board);
-    root.setBoard(new Board(this.getAsdf().getBoard()));
-    System.err.println(root.toString());
+//    System.err.println(root.toString());
+    root.setMoveType(MoveType.ASDFBOT);
     tree.setRoot(root);
     assignNodes(root, 1);
 
@@ -60,17 +60,23 @@ public class AsdfBot {
 
   //TODO: build tree more efficiently
   private void assignNodes(Node currentNode, int currentDepth) {
-
+    System.err.println("currentNode: " + currentNode.toString());
     if (currentDepth <= depth) {
       for (int i = 1; i <= 7; i++) {
+        System.err.println("assignNode: " + currentDepth + " / i: " + i);
         Kalah currentKalah = new Kalah(new Board(currentNode.getBoard()));
 
         Move nextMove = new Move(convertMoveTypeToSide(currentNode.getMoveType()), i);
 
+
+        System.err.println("nextMove: " + nextMove.getHole());
+        System.err.println(currentKalah.getBoard());
+
         if (currentKalah.isLegalMove(nextMove)) {
           Side nextSide = currentKalah.makeMove(nextMove);
-          Node nextChild = new Node(i, currentKalah.getBoard(), true, convertSideToMoveType(nextSide), 0, currentNode);
-
+          Node nextChild = new Node(i, currentKalah.getBoard(), convertSideToMoveType(nextSide), 0, currentNode);
+          System.err.println("aaaaaa" + nextChild.toString());
+          currentNode.addNextMove(nextChild);
           assignNodes(nextChild, currentDepth + 1);
         }
       }
@@ -162,8 +168,8 @@ public class AsdfBot {
 
       for (int i = 1; i <= 7; i++) {
         int parentOurSeedsinCurrentHouse = node.getParent().getBoard().getSeeds(ourSide, i);
-        int parentOppSeedsinFrontHouse = node.getParent().getBoard().getSeeds(ourSide.opposite(), 7 - i);
-        int oppSeedsinFrontHouse = node.getBoard().getSeeds(ourSide.opposite(), 7 - i);
+        int parentOppSeedsinFrontHouse = node.getParent().getBoard().getSeeds(ourSide.opposite(), 8 - i);
+        int oppSeedsinFrontHouse = node.getBoard().getSeeds(ourSide.opposite(), 8 - i);
         if (parentOurSeedsinCurrentHouse == 0 && parentOppSeedsinFrontHouse != 0 && oppSeedsinFrontHouse == 0) {
           if (node.getParent().getParent().getMoveType() == MoveType.ASDFBOT) {
             w5 = 50;
@@ -185,8 +191,8 @@ public class AsdfBot {
       }
       for (int i = 1; i <= 7; i++) {
         int parentOppSeedsinCurrentHouse = node.getParent().getBoard().getSeeds(ourSide.opposite(), i);
-        int parentOurSeedsinFrontHouse = node.getParent().getBoard().getSeeds(ourSide, 7 - i);
-        int oppSeedsinCurrentHouse = node.getBoard().getSeeds(ourSide, 7 - i);
+        int parentOurSeedsinFrontHouse = node.getParent().getBoard().getSeeds(ourSide, 8 - i);
+        int oppSeedsinCurrentHouse = node.getBoard().getSeeds(ourSide, 8 - i);
 
         if (parentOppSeedsinCurrentHouse == 0 && parentOurSeedsinFrontHouse != 0 && oppSeedsinCurrentHouse == 0) {
           if (node.getParent().getParent().getMoveType() == MoveType.OPPONENT) {
@@ -200,13 +206,14 @@ public class AsdfBot {
       }
     }
 
-    System.err.println("Difference between the number of nodes in each side: " + e1);
-    System.err.println("difference between the number of free houses in each side: " + e2);
-    System.err.println("The number of seeds added to store by passing store in a turn: " + e3);
-    System.err.println("Last seed of house added to store in turn (1 or -1 or 0): " + e4);
-    System.err.println("The number of seeds added to store by getting nodes from opponent's house: " + e5);
-    System.err.println("w5 (if parent's last node of house added to store, and in current turn, some seeds added to " +
-        "store by getting nodes from opponent's house - so weight will be 50: " + w5);
+//    System.err.println("Difference between the number of nodes in each side: " + e1);
+//    System.err.println("difference between the number of free houses in each side: " + e2);
+//    System.err.println("The number of seeds added to store by passing store in a turn: " + e3);
+//    System.err.println("Last seed of house added to store in turn (1 or -1 or 0): " + e4);
+//    System.err.println("The number of seeds added to store by getting nodes from opponent's house: " + e5);
+//    System.err.println("w5 (if parent's last node of house added to store, and in current turn, some seeds added to " +
+//        "store by getting nodes from opponent's house - so weight will be 50: " + w5);
+//    System.err.println();
 
     ef = w1 * e1 + w2 * e2 + w3 * e3 + w4 * e4 + w5 * e5;
     return ef;
@@ -232,7 +239,7 @@ public class AsdfBot {
             this.setLastPlayer(MoveType.ASDFBOT);
 
             // Get best move
-            int i = rightMove(canSwap, new Board(this.getAsdf().getBoard()));
+            int i = 1;//rightMove(canSwap, new Board(this.getAsdf().getBoard()));
             s = Protocol.createMoveMsg(i);
             System.err.println("Asdf start decision: " + i);
             Main.sendMsg(s);
