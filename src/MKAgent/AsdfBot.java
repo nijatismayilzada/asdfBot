@@ -8,7 +8,7 @@ public class AsdfBot {
   private Side ourSide;
   private MoveType lastPlayer;
   private Tree tree;
-  private int depth = 5;
+  private int depth = 3;
 
   public AsdfBot(int holes, int seeds) {
     this.asdfKalah = new Kalah(new Board(holes, seeds));
@@ -47,11 +47,11 @@ public class AsdfBot {
 
 
     for (Node possibleMove : this.tree.getRoot().getNextMoves()) {
-      System.err.println("possible moves: " + possibleMove.toString());
+//      System.err.println("possible moves: " + possibleMove.toString());
       if (possibleMove.getPayoff() > maxValue) {
         maxValue = possibleMove.getPayoff();
         bestMove = possibleMove.getName();
-        System.err.println("maxValue: " + maxValue + ". Best move: " + bestMove );
+//        System.err.println("maxValue: " + maxValue + ". Best move: " + bestMove);
       }
     }
 
@@ -60,32 +60,33 @@ public class AsdfBot {
 
   //TODO: build tree more efficiently
   private void assignNodes(Node currentNode, int currentDepth) {
-    System.err.println("currentNode: " + currentNode.toString());
+//    System.err.println("currentNode: " + currentNode.toString());
     if (currentDepth <= depth) {
       for (int i = 1; i <= 7; i++) {
-        System.err.println("assignNode: " + currentDepth + " / i: " + i);
+//        System.err.println("assignNode: " + currentDepth + " / i: " + i);
         Kalah currentKalah = new Kalah(new Board(currentNode.getBoard()));
 
         Move nextMove = new Move(convertMoveTypeToSide(currentNode.getMoveType()), i);
 
 
-        System.err.println("nextMove: " + nextMove.getHole());
-        System.err.println(currentKalah.getBoard());
+//        System.err.println("nextMove: " + nextMove.getHole());
 
         if (currentKalah.isLegalMove(nextMove)) {
           Side nextSide = currentKalah.makeMove(nextMove);
+//          System.err.println("currentKalah:\n" + currentKalah.getBoard());
           Node nextChild = new Node(i, currentKalah.getBoard(), convertSideToMoveType(nextSide), 0, currentNode);
-          System.err.println("aaaaaa" + nextChild.toString());
           currentNode.addNextMove(nextChild);
           assignNodes(nextChild, currentDepth + 1);
+          System.err.println("Payoff: " + nextChild.getPayoff() + " nextChild board:\n" + nextChild.getBoard());
         }
       }
-      int maxValue = Integer.MIN_VALUE;
+      int maxValue = -69;
       for (Node possibleMove : currentNode.getNextMoves()) {
-        if (possibleMove.getPayoff() > maxValue)
+        if (possibleMove.getPayoff() > maxValue) {
           maxValue = possibleMove.getPayoff();
+        }
       }
-      currentNode.setPayoff(currentNode.getPayoff() + maxValue);
+      currentNode.setPayoff(maxValue);
       //TODO: alphabeta pruning
     } else {
 
