@@ -60,32 +60,31 @@ public class AsdfBot {
           Node nextChild = new Node(i, currentKalah.getBoard(), nextSide, 0, currentNode);
           currentNode.addNextMove(nextChild);
           assignNodes(nextChild, currentDepth + 1);
-          int payoff = heuristic(currentNode);
-          System.err.println(payoff);
+
+          int payoff = heuristic(currentNode, currentDepth);
+
           int minValue = Integer.MAX_VALUE;
           int maxValue = Integer.MIN_VALUE;
 
-          if(currentNode.getPlayerSide() == this.getOurSide()) {
+          if (currentNode.getPlayerSide() == this.getOurSide()) {
             for (Node nextNode : currentNode.getNextMoves()) {
               if (nextNode.getPayoff() > maxValue)
                 maxValue = nextNode.getPayoff();
             }
-            currentNode.setPayoff(payoff+maxValue);
-          }
-          else
-          {
+            currentNode.setPayoff(payoff + maxValue);
+          } else {
             for (Node nextNode : currentNode.getNextMoves()) {
               if (nextNode.getPayoff() < minValue)
                 minValue = nextNode.getPayoff();
             }
-            currentNode.setPayoff(payoff+minValue);
+            currentNode.setPayoff(payoff + minValue);
           }
         }
       }
       // TODO: alphabeta pruning
     } else {
 
-      int payoff = heuristic(currentNode);
+      int payoff = heuristic(currentNode, currentDepth);
       currentNode.setPayoff(payoff);
     }
   }
@@ -107,17 +106,28 @@ public class AsdfBot {
       SPECIAL CASE: if parent's last node of house added to store, and in current turn, some seeds added to
                     store by getting nodes from opponent's house - change weight from 2 to 50.
     */
-  private int heuristic(Node node) {
+  private int heuristic(Node node, int currentDepth) {
 
-    int ef, w1 = 1, w2 = 1, w3 = 1, w4 = 2, w5 = 2, e1 = 0, e2 = 0, e3 = 0, e4 = 0, e5 = 0;
+    int ef, w1 = 5, w2 = 1, w3 = 1, w4 = 4, w5 = 2, e1 = 0, e2 = 0, e3 = 0, e4 = 0, e5 = 0;
 
     int ourSeedsinStore = node.getBoard().getSeedsInStore(ourSide);
     int oppSeedsinStore = node.getBoard().getSeedsInStore(ourSide.opposite());
-    int parentOurSeedsinStore = node.getParent().getBoard().getSeedsInStore(ourSide);
-    int parentOppSeedsinStore = node.getParent().getBoard().getSeedsInStore(ourSide);
-    int parentMove = node.getParent().getName();
-    int ourSeedsinHouse = node.getParent().getBoard().getSeeds(ourSide, parentMove);
-    int oppSeedsinHouse = node.getParent().getBoard().getSeeds(ourSide.opposite(), parentMove);
+
+
+    // hardcode fix.
+    int parentOurSeedsinStore = 0;
+    int parentOppSeedsinStore = 0;
+    int parentMove = 0;
+    int ourSeedsinHouse = 0;
+    int oppSeedsinHouse = 0;
+
+    if (currentDepth != 1) {
+      parentOurSeedsinStore = node.getParent().getBoard().getSeedsInStore(ourSide);
+      parentOppSeedsinStore = node.getParent().getBoard().getSeedsInStore(ourSide);
+      parentMove = node.getName(); // node.getParent().getName();
+      ourSeedsinHouse = node.getParent().getBoard().getSeeds(ourSide, parentMove);
+      oppSeedsinHouse = node.getParent().getBoard().getSeeds(ourSide.opposite(), parentMove);
+    }
 
     int ourFreeHouse = 0;
     int oppFreeHouse = 0;
@@ -136,56 +146,66 @@ public class AsdfBot {
     e1 = ourSeeds - oppSeeds;
     e2 = ourFreeHouse - oppFreeHouse;
 
-    if (node.getParent().getPlayerSide() == this.getOurSide()) {
+    // hardcode fix.
+    if (currentDepth != 1) {
+      if (node.getParent().getPlayerSide() == this.getOurSide()) {
 
-      if (parentMove + ourSeedsinHouse == 8) {
-        e4 = 1;
-        e3 = 1;
-      } else if (parentMove + parentOurSeedsinStore > 8) {
-        e4 = 0;
-        e3 = (parentMove + parentOurSeedsinStore) / 8;
-      }
+        if (parentMove + ourSeedsinHouse == 8) {
+          e4 = 1;
+          e3 = 1;
+        } else if (parentMove + parentOurSeedsinStore > 8) {
+          e4 = 0;
+          e3 = (parentMove + parentOurSeedsinStore) / 8;
+        }
 
-      for (int i = 1; i <= 7; i++) {
-        int parentOurSeedsinCurrentHouse = node.getParent().getBoard().getSeeds(ourSide, i);
-        int parentOppSeedsinFrontHouse = node.getParent().getBoard().getSeeds(ourSide.opposite(), 8 - i);
-        int oppSeedsinFrontHouse = node.getBoard().getSeeds(ourSide.opposite(), 8 - i);
-        if (parentOurSeedsinCurrentHouse == 0 && parentOppSeedsinFrontHouse != 0 && oppSeedsinFrontHouse == 0) {
-          if (node.getParent().getParent().getPlayerSide() == this.getOurSide()) {
-            w5 = 50;
+        for (int i = 1; i <= 7; i++) {
+          int parentOurSeedsinCurrentHouse = node.getParent().getBoard().getSeeds(ourSide, i);
+          int parentOppSeedsinFrontHouse = node.getParent().getBoard().getSeeds(ourSide.opposite(), 8 - i);
+          int oppSeedsinFrontHouse = node.getBoard().getSeeds(ourSide.opposite(), 8 - i);
+          if (parentOurSeedsinCurrentHouse == 0 && parentOppSeedsinFrontHouse != 0 && oppSeedsinFrontHouse == 0) {
+            if (currentDepth != 2) {
+              if (node.getParent().getParent().getPlayerSide() == this.getOurSide()) {
+                w5 = 5;
+                e5 = parentOppSeedsinFrontHouse;
+                break;
+              }
+            }
             e5 = parentOppSeedsinFrontHouse;
             break;
           }
-          e5 = parentOppSeedsinFrontHouse;
-          break;
+
         }
-      }
-    } else if (node.getParent().getPlayerSide() == this.getOurSide().opposite()) {
+      } else if (node.getParent().getPlayerSide() == this.getOurSide().opposite()) {
 
-      if (parentMove + oppSeedsinHouse == 8) {
-        e4 = -1;
-        e3 = -1;
-      } else if (parentMove + parentOppSeedsinStore > 8) {
-        e4 = 0;
-        e3 = -(parentMove + parentOppSeedsinStore) / 8;
-      }
-      for (int i = 1; i <= 7; i++) {
-        int parentOppSeedsinCurrentHouse = node.getParent().getBoard().getSeeds(ourSide.opposite(), i);
-        int parentOurSeedsinFrontHouse = node.getParent().getBoard().getSeeds(ourSide, 8 - i);
-        int oppSeedsinCurrentHouse = node.getBoard().getSeeds(ourSide, 8 - i);
+        if (parentMove + oppSeedsinHouse == 8) {
+          e4 = -1;
+          e3 = -1;
+        } else if (parentMove + parentOppSeedsinStore > 8) {
+          e4 = 0;
+          e3 = -(parentMove + parentOppSeedsinStore) / 8;
+        }
 
-        if (parentOppSeedsinCurrentHouse == 0 && parentOurSeedsinFrontHouse != 0 && oppSeedsinCurrentHouse == 0) {
-          if (node.getParent().getParent().getPlayerSide() == this.getOurSide()) {
-            w5 = 50;
+
+        for (int i = 1; i <= 7; i++) {
+          int parentOppSeedsinCurrentHouse = node.getParent().getBoard().getSeeds(ourSide.opposite(), i);
+          int parentOurSeedsinFrontHouse = node.getParent().getBoard().getSeeds(ourSide, 8 - i);
+          int oppSeedsinCurrentHouse = node.getBoard().getSeeds(ourSide, 8 - i);
+
+          if (parentOppSeedsinCurrentHouse == 0 && parentOurSeedsinFrontHouse != 0 && oppSeedsinCurrentHouse == 0) {
+            if (currentDepth != 2) {
+              if (node.getParent().getParent().getPlayerSide() == this.getOurSide()) {
+                w5 = 5;
+                e5 = -parentOurSeedsinFrontHouse;
+                break;
+              }
+            }
             e5 = -parentOurSeedsinFrontHouse;
             break;
           }
-          e5 = -parentOurSeedsinFrontHouse;
-          break;
         }
       }
-
     }
+
 
 //    System.err.println("Difference between the number of nodes in each side: " + e1);
 //    System.err.println("difference between the number of free houses in each side: " + e2);
@@ -197,10 +217,6 @@ public class AsdfBot {
 //    System.err.println();
 
     ef = w1 * e1 + w2 * e2 + w3 * e3 + w4 * e4 + w5 * e5;
-//    if (node.getPlayerSide() == this.getOurSide().opposite())
-//    {
-//      ef = (-1) * ef;
-//    }
     return ef;
   }
 
