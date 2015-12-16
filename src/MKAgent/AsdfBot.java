@@ -1,5 +1,7 @@
 package MKAgent;
 
+import sun.print.resources.serviceui;
+
 import java.io.IOException;
 
 public class AsdfBot {
@@ -58,6 +60,26 @@ public class AsdfBot {
           Node nextChild = new Node(i, currentKalah.getBoard(), nextSide, 0, currentNode);
           currentNode.addNextMove(nextChild);
           assignNodes(nextChild, currentDepth + 1);
+          int payoff = heuristic(currentNode);
+          System.err.println(payoff);
+          int minValue = Integer.MAX_VALUE;
+          int maxValue = Integer.MIN_VALUE;
+
+          if(currentNode.getPlayerSide() == this.getOurSide()) {
+            for (Node nextNode : currentNode.getNextMoves()) {
+              if (nextNode.getPayoff() > maxValue)
+                maxValue = nextNode.getPayoff();
+            }
+            currentNode.setPayoff(payoff+maxValue);
+          }
+          else
+          {
+            for (Node nextNode : currentNode.getNextMoves()) {
+              if (nextNode.getPayoff() < minValue)
+                minValue = nextNode.getPayoff();
+            }
+            currentNode.setPayoff(payoff+minValue);
+          }
         }
       }
       // TODO: alphabeta pruning
@@ -162,6 +184,7 @@ public class AsdfBot {
           break;
         }
       }
+
     }
 
 //    System.err.println("Difference between the number of nodes in each side: " + e1);
@@ -174,6 +197,10 @@ public class AsdfBot {
 //    System.err.println();
 
     ef = w1 * e1 + w2 * e2 + w3 * e3 + w4 * e4 + w5 * e5;
+//    if (node.getPlayerSide() == this.getOurSide().opposite())
+//    {
+//      ef = (-1) * ef;
+//    }
     return ef;
   }
 
