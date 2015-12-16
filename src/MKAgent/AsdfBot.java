@@ -6,7 +6,6 @@ public class AsdfBot {
 
   private Kalah asdfKalah;
   private Side ourSide;
-  private MoveType lastPlayer;
   private Tree tree;
   private int DEPTH = 5;
 
@@ -27,17 +26,9 @@ public class AsdfBot {
     this.ourSide = ourSide;
   }
 
-  public MoveType getLastPlayer() {
-    return lastPlayer;
-  }
-
-  public void setLastPlayer(MoveType lastPlayer) {
-    this.lastPlayer = lastPlayer;
-  }
-
   private int rightMove(boolean canSwap, Board board) {
     Node root = new Node(0, board);
-    root.setMoveType(MoveType.ASDFBOT);
+    root.setPlayerSide(this.getOurSide());
     tree.setRoot(root);
     assignNodes(root, 1);
 
@@ -61,10 +52,10 @@ public class AsdfBot {
     if (currentDepth <= DEPTH) {
       for (int i = 1; i <= 7; i++) {
         Kalah currentKalah = new Kalah(new Board(currentNode.getBoard()));
-        Move nextMove = new Move(convertMoveTypeToSide(currentNode.getMoveType()), i);
+        Move nextMove = new Move(currentNode.getPlayerSide(), i);
         if (currentKalah.isLegalMove(nextMove)) {
           Side nextSide = currentKalah.makeMove(nextMove);
-          Node nextChild = new Node(i, currentKalah.getBoard(), convertSideToMoveType(nextSide), 0, currentNode);
+          Node nextChild = new Node(i, currentKalah.getBoard(), nextSide, 0, currentNode);
           currentNode.addNextMove(nextChild);
           assignNodes(nextChild, currentDepth + 1);
         }
@@ -74,22 +65,6 @@ public class AsdfBot {
 
       int payoff = heuristic(currentNode);
       currentNode.setPayoff(payoff);
-    }
-  }
-
-  public Side convertMoveTypeToSide(MoveType side) {
-    if (side == MoveType.ASDFBOT) {
-      return this.getOurSide();
-    } else {
-      return this.getOurSide().opposite();
-    }
-  }
-
-  public MoveType convertSideToMoveType(Side side) {
-    if (side == this.getOurSide()) {
-      return MoveType.ASDFBOT;
-    } else {
-      return MoveType.OPPONENT;
     }
   }
 
@@ -139,7 +114,7 @@ public class AsdfBot {
     e1 = ourSeeds - oppSeeds;
     e2 = ourFreeHouse - oppFreeHouse;
 
-    if (node.getParent().getMoveType() == MoveType.ASDFBOT) {
+    if (node.getParent().getPlayerSide() == this.getOurSide()) {
 
       if (parentMove + ourSeedsinHouse == 8) {
         e4 = 1;
@@ -154,7 +129,7 @@ public class AsdfBot {
         int parentOppSeedsinFrontHouse = node.getParent().getBoard().getSeeds(ourSide.opposite(), 8 - i);
         int oppSeedsinFrontHouse = node.getBoard().getSeeds(ourSide.opposite(), 8 - i);
         if (parentOurSeedsinCurrentHouse == 0 && parentOppSeedsinFrontHouse != 0 && oppSeedsinFrontHouse == 0) {
-          if (node.getParent().getParent().getMoveType() == MoveType.ASDFBOT) {
+          if (node.getParent().getParent().getPlayerSide() == this.getOurSide()) {
             w5 = 50;
             e5 = parentOppSeedsinFrontHouse;
             break;
@@ -163,7 +138,7 @@ public class AsdfBot {
           break;
         }
       }
-    } else if (node.getParent().getMoveType() == MoveType.OPPONENT) {
+    } else if (node.getParent().getPlayerSide() == this.getOurSide().opposite()) {
 
       if (parentMove + oppSeedsinHouse == 8) {
         e4 = -1;
@@ -178,7 +153,7 @@ public class AsdfBot {
         int oppSeedsinCurrentHouse = node.getBoard().getSeeds(ourSide, 8 - i);
 
         if (parentOppSeedsinCurrentHouse == 0 && parentOurSeedsinFrontHouse != 0 && oppSeedsinCurrentHouse == 0) {
-          if (node.getParent().getParent().getMoveType() == MoveType.OPPONENT) {
+          if (node.getParent().getParent().getPlayerSide() == this.getOurSide()) {
             w5 = 50;
             e5 = -parentOurSeedsinFrontHouse;
             break;
@@ -219,7 +194,6 @@ public class AsdfBot {
           if (first) {
             // If we start first, set our side and "last player" variable
             this.setOurSide(Side.SOUTH);
-            this.setLastPlayer(MoveType.ASDFBOT);
 
             // Get best move
             int i = 1;//rightMove(canSwap, new Board(this.getAsdf().getBoard()));
@@ -229,7 +203,6 @@ public class AsdfBot {
           } else {
             // Set opponent side and last player
             this.setOurSide(Side.NORTH);
-            this.setLastPlayer(MoveType.OPPONENT);
 
             // Asdfbot can swipe on its turn
             canSwap = true;
@@ -263,13 +236,8 @@ public class AsdfBot {
               s = Protocol.createMoveMsg(i);
             }
             canSwap = false;
-            // The whole operation is done by asdfbot, so set last player
-            // asdfbot
-            this.setLastPlayer(MoveType.ASDFBOT);
             Main.sendMsg(s);
           } else {
-            // If this is opponent's turn, set last player
-            this.setLastPlayer(MoveType.OPPONENT);
           }
 
           if (gameMessage.end) {

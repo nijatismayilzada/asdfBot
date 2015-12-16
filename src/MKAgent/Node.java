@@ -6,7 +6,7 @@ public class Node {
 
   private int name;
   private Board board;
-  private MoveType moveType;
+  private Side playerSide;
   private int payoff = 0;
   private Node parent;
   private ArrayList<Node> nextMoves;
@@ -25,18 +25,18 @@ public class Node {
     this.setBoard(board);
   }
 
-  public Node(int name, Board board, MoveType moveType) {
+  public Node(int name, Board board, Side playerSide) {
     this(name, board);
-    this.setMoveType(moveType);
+    this.setPlayerSide(playerSide);
   }
 
-  public Node(int name, Board board, MoveType moveType, int payoff) {
-    this(name, board, moveType);
+  public Node(int name, Board board, Side playerSide, int payoff) {
+    this(name, board, playerSide);
     this.setPayoff(payoff);
   }
 
-  public Node(int name, Board board,  MoveType moveType, int payoff, Node parent) {
-    this(name, board, moveType, payoff);
+  public Node(int name, Board board,  Side playerSide, int payoff, Node parent) {
+    this(name, board, playerSide, payoff);
     this.setParent(parent);
   }
 
@@ -64,12 +64,12 @@ public class Node {
     this.name = name;
   }
 
-  public void setMoveType(MoveType moveType) {
-    this.moveType = moveType;
+  public void setPlayerSide(Side playerSide) {
+    this.playerSide = playerSide;
   }
 
-  public MoveType getMoveType() {
-    return this.moveType;
+  public Side getPlayerSide() {
+    return this.playerSide;
   }
 
   public void addNextMove(Node nextMove) {
@@ -100,7 +100,7 @@ public class Node {
   @Override
   public String toString() {
     return "Node -> name: " + this.getName() + " / Payoff: " + this.getPayoff()
-        + " / moveType: " + this.getMoveType() + " / nextMoves: "
+        + " / moveType: " + this.getPlayerSide() + " / nextMoves: "
         + this.getNextMoves().toString();
   }
 }
