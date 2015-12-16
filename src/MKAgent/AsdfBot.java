@@ -34,7 +34,15 @@ public class AsdfBot {
     tree.setRoot(root);
     assignNodes(root, 1);
 
-    // TODO check if swap is needed?
+    if (canSwap) {
+      swap();
+      Node swap = new Node(8, board);
+      swap.setPlayerSide(this.getOurSide().opposite());
+      assignNodes(swap, 1);
+      System.err.println("Swap payoff!: " + swap.getPayoff());
+      root.addNextMove(swap);
+      swap();
+    }
 
     int bestMove = 0;
     int maxValue = Integer.MIN_VALUE;
@@ -45,7 +53,11 @@ public class AsdfBot {
         bestMove = possibleMove.getName();
       }
     }
+    System.err.println("Best payoff!: " + maxValue);
 
+    if (bestMove == 8) {
+      return -1;
+    }
     return bestMove;
   }
 
