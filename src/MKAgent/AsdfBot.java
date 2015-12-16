@@ -8,7 +8,7 @@ public class AsdfBot {
   private Side ourSide;
   private MoveType lastPlayer;
   private Tree tree;
-  private int depth = 3;
+  private int DEPTH = 5;
 
   public AsdfBot(int holes, int seeds) {
     this.asdfKalah = new Kalah(new Board(holes, seeds));
@@ -37,61 +37,43 @@ public class AsdfBot {
 
   private int rightMove(boolean canSwap, Board board) {
     Node root = new Node(0, board);
-//    System.err.println(root.toString());
     root.setMoveType(MoveType.ASDFBOT);
     tree.setRoot(root);
     assignNodes(root, 1);
 
+    // TODO check if swap is needed?
+
     int bestMove = 0;
     int maxValue = Integer.MIN_VALUE;
 
-
     for (Node possibleMove : this.tree.getRoot().getNextMoves()) {
-//      System.err.println("possible moves: " + possibleMove.toString());
       if (possibleMove.getPayoff() > maxValue) {
         maxValue = possibleMove.getPayoff();
         bestMove = possibleMove.getName();
-//        System.err.println("maxValue: " + maxValue + ". Best move: " + bestMove);
       }
     }
 
     return bestMove;
   }
 
-  //TODO: build tree more efficiently
+  // TODO: build tree more efficiently
   private void assignNodes(Node currentNode, int currentDepth) {
-//    System.err.println("currentNode: " + currentNode.toString());
-    if (currentDepth <= depth) {
+    if (currentDepth <= DEPTH) {
       for (int i = 1; i <= 7; i++) {
-//        System.err.println("assignNode: " + currentDepth + " / i: " + i);
         Kalah currentKalah = new Kalah(new Board(currentNode.getBoard()));
-
         Move nextMove = new Move(convertMoveTypeToSide(currentNode.getMoveType()), i);
-
-
-//        System.err.println("nextMove: " + nextMove.getHole());
-
         if (currentKalah.isLegalMove(nextMove)) {
           Side nextSide = currentKalah.makeMove(nextMove);
-//          System.err.println("currentKalah:\n" + currentKalah.getBoard());
           Node nextChild = new Node(i, currentKalah.getBoard(), convertSideToMoveType(nextSide), 0, currentNode);
           currentNode.addNextMove(nextChild);
           assignNodes(nextChild, currentDepth + 1);
-          System.err.println("Payoff: " + nextChild.getPayoff() + " nextChild board:\n" + nextChild.getBoard());
         }
       }
-      int maxValue = -69;
-      for (Node possibleMove : currentNode.getNextMoves()) {
-        if (possibleMove.getPayoff() > maxValue) {
-          maxValue = possibleMove.getPayoff();
-        }
-      }
-      currentNode.setPayoff(maxValue);
-      //TODO: alphabeta pruning
+      // TODO: alphabeta pruning
     } else {
 
       int payoff = heuristic(currentNode);
-      currentNode.setPayoff(currentNode.getPayoff() + payoff);
+      currentNode.setPayoff(payoff);
     }
   }
 
@@ -233,7 +215,7 @@ public class AsdfBot {
         case START:
           // if true, our bot starts first
           boolean first = Protocol.interpretStartMsg(s);
-          System.err.println("ASDFBOT is starting: " + first);
+          System.err.println("asdfBot is starting: " + first);
           if (first) {
             // If we start first, set our side and "last player" variable
             this.setOurSide(Side.SOUTH);
@@ -242,7 +224,7 @@ public class AsdfBot {
             // Get best move
             int i = 1;//rightMove(canSwap, new Board(this.getAsdf().getBoard()));
             s = Protocol.createMoveMsg(i);
-            System.err.println("Asdf start decision: " + i);
+            System.err.println("asdfBot start decision: " + i);
             Main.sendMsg(s);
           } else {
             // Set opponent side and last player
@@ -259,7 +241,7 @@ public class AsdfBot {
               .getAsdf().getBoard());
 
           System.err.println("The board:\n" + this.getAsdf().getBoard());
-          System.err.println("ASDFBOT's turn: " + gameMessage.again + ". Last move: " + gameMessage.move);
+          System.err.println("asdfBot's turn: " + gameMessage.again + ". Last move: " + gameMessage.move);
 
           if (gameMessage.move == -1) {
             swap();
@@ -270,7 +252,7 @@ public class AsdfBot {
           if (gameMessage.again) {
             // Get best move
             int i = rightMove(canSwap, new Board(this.getAsdf().getBoard()));
-            System.err.println("Asdf decision: " + i);
+            System.err.println("asdfBot decision: " + i);
 
             // if best right move is -1, it means asdfbot should swap
             if (i == -1) {
