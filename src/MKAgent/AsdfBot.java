@@ -9,7 +9,7 @@ public class AsdfBot {
   private Kalah asdfKalah;
   private Side ourSide;
   private Tree tree;
-  private int DEPTH = 5;
+  private int DEPTH = 7;
 
   public AsdfBot(int holes, int seeds) {
     this.asdfKalah = new Kalah(new Board(holes, seeds));
@@ -108,7 +108,7 @@ public class AsdfBot {
     */
   private int heuristic(Node node, int currentDepth) {
 
-    int ef, w1 = 5, w2 = 1, w3 = 1, w4 = 4, w5 = 2, e1 = 0, e2 = 0, e3 = 0, e4 = 0, e5 = 0;
+    int ef, w1 = 1, w2 = 1, w3 = 1, w4 = 10, w5 = 2, e1 = 0, e2 = 0, e3 = 0, e4 = 0, e5 = 0;
 
     int ourSeedsinStore = node.getBoard().getSeedsInStore(ourSide);
     int oppSeedsinStore = node.getBoard().getSeedsInStore(ourSide.opposite());
