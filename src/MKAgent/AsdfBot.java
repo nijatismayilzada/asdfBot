@@ -120,7 +120,7 @@ public class AsdfBot {
     */
   private int heuristic(Node node, int currentDepth) {
 
-    int ef, w1 = 1, w2 = 1, w3 = 1, w4 = 10, w5 = 2, e1 = 0, e2 = 0, e3 = 0, e4 = 0, e5 = 0;
+    int ef, w1 = 1, w2 = 1, w3 = 1, w4 = 10, w5 = 4, e1 = 0, e2 = 0, e3 = 0, e4 = 0, e5 = 0;
 
     int ourSeedsinStore = node.getBoard().getSeedsInStore(ourSide);
     int oppSeedsinStore = node.getBoard().getSeedsInStore(ourSide.opposite());
@@ -146,7 +146,7 @@ public class AsdfBot {
     int ourSeeds = ourSeedsinStore;
     int oppSeeds = oppSeedsinStore;
 
-    for (int i = 1; i <= 7; i++) {
+    for (int i = 1; i <= 4; i++) {
       ourSeeds += node.getBoard().getSeeds(ourSide, i);
       oppSeeds += node.getBoard().getSeeds(ourSide.opposite(), i);
 
@@ -203,7 +203,7 @@ public class AsdfBot {
           int parentOurSeedsinFrontHouse = node.getParent().getBoard().getSeeds(ourSide, 8 - i);
           int oppSeedsinCurrentHouse = node.getBoard().getSeeds(ourSide, 8 - i);
 
-          if (parentOppSeedsinCurrentHouse == 0 && parentOurSeedsinFrontHouse != 0 && oppSeedsinCurrentHouse == 0) {
+          if ((parentOppSeedsinCurrentHouse == 0 || parentOppSeedsinCurrentHouse == 15) && parentOurSeedsinFrontHouse != 0 && oppSeedsinCurrentHouse == 0) {
             if (currentDepth != 2) {
               if (node.getParent().getParent().getPlayerSide() == this.getOurSide()) {
                 w5 = 5;
@@ -211,6 +211,7 @@ public class AsdfBot {
                 break;
               }
             }
+            w5 = 5;
             e5 = -parentOurSeedsinFrontHouse;
             break;
           }
@@ -226,7 +227,7 @@ public class AsdfBot {
 //    System.err.println("The number of seeds added to store by getting nodes from opponent's house: " + e5);
 //    System.err.println("w5 (if parent's last node of house added to store, and in current turn, some seeds added to " +
 //        "store by getting nodes from opponent's house - so weight will be 50: " + w5);
-//    System.err.println();
+
 
     ef = w1 * e1 + w2 * e2 + w3 * e3 + w4 * e4 + w5 * e5;
     return ef;
