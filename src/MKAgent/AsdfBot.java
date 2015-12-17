@@ -30,13 +30,13 @@ public class AsdfBot {
     Node root = new Node(0, board);
     root.setPlayerSide(this.getOurSide());
     tree.setRoot(root);
-    assignNodes(root, 1);
+    assignNodes(root, 1, Integer.MIN_VALUE, Integer.MAX_VALUE);
 
     if (canSwap) {
       swap();
       Node swap = new Node(8, board);
       swap.setPlayerSide(this.getOurSide().opposite());
-      assignNodes(swap, 1);
+      assignNodes(swap, 1, Integer.MIN_VALUE, Integer.MAX_VALUE);
       System.err.println("Swap payoff!: " + swap.getPayoff());
       root.addNextMove(swap);
       swap();
@@ -59,8 +59,10 @@ public class AsdfBot {
     return bestMove;
   }
 
+
+
   // TODO: build tree more efficiently
-  private void assignNodes(Node currentNode, int currentDepth) {
+  private int assignNodes(Node currentNode, int currentDepth, int alpha, int beta) {
     if (currentDepth <= DEPTH) {
       for (int i = 1; i <= 7; i++) {
         Kalah currentKalah = new Kalah(new Board(currentNode.getBoard()));
@@ -69,34 +71,50 @@ public class AsdfBot {
           Side nextSide = currentKalah.makeMove(nextMove);
           Node nextChild = new Node(i, currentKalah.getBoard(), nextSide, 0, currentNode);
           currentNode.addNextMove(nextChild);
-          assignNodes(nextChild, currentDepth + 1);
+          int po = assignNodes(nextChild, currentDepth + 1, alpha, beta);
 
-          int payoff = heuristic(currentNode, currentDepth);
-
-          int minValue = Integer.MAX_VALUE;
-          int maxValue = Integer.MIN_VALUE;
-
-          if (currentNode.getPlayerSide() == this.getOurSide()) {
-            for (Node nextNode : currentNode.getNextMoves()) {
-              if (nextNode.getPayoff() > maxValue)
-                maxValue = nextNode.getPayoff();
+            if (nextChild.getPlayerSide() == this.getOurSide()) {
+              if (po > alpha)
+                alpha = po;
+              if (alpha >= beta)
+                return po;
             }
-            currentNode.setPayoff(payoff + maxValue);
-          } else {
-            for (Node nextNode : currentNode.getNextMoves()) {
-              if (nextNode.getPayoff() < minValue)
-                minValue = nextNode.getPayoff();
+            else {
+              if (po > beta)
+                beta = po;
+              if (alpha >= beta)
+                return po;
             }
-            currentNode.setPayoff(payoff + minValue);
-          }
+        } // if
+      } // for
+
+      int payoff = heuristic(currentNode, currentDepth);
+
+      int minValue = Integer.MAX_VALUE;
+      int maxValue = Integer.MIN_VALUE;
+
+      if (currentNode.getPlayerSide() == this.getOurSide()) {
+        for (Node nextNode : currentNode.getNextMoves()) {
+          if (nextNode.getPayoff() > maxValue)
+            maxValue = nextNode.getPayoff();
         }
-      }
+        currentNode.setPayoff(payoff + maxValue);
+      } else {
+        for (Node nextNode : currentNode.getNextMoves()) {
+          if (nextNode.getPayoff() < minValue)
+            minValue = nextNode.getPayoff();
+        }
+        currentNode.setPayoff(payoff + minValue);
+      } // ifelse
+
+      return currentNode.getPayoff();
       // TODO: alphabeta pruning
     } else {
 
       int payoff = heuristic(currentNode, currentDepth);
       currentNode.setPayoff(payoff);
-    }
+      return payoff;
+    } // ifelse
   }
 
   private void swap() {
