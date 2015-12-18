@@ -8,6 +8,7 @@ public class AsdfBot {
   private Side ourSide;
   private Tree tree;
   private int DEPTH = 7;
+  private int counter = 0;
 
   public AsdfBot(int holes, int seeds) {
     this.asdfKalah = new Kalah(new Board(holes, seeds));
@@ -60,9 +61,9 @@ public class AsdfBot {
   }
 
 
-
   // TODO: build tree more efficiently
-  private int assignNodes(Node currentNode, int currentDepth, int alpha, int beta) {
+  private void assignNodes(Node currentNode, int currentDepth, int alpha, int beta) {
+    counter++;
     if (currentDepth <= DEPTH) {
       for (int i = 1; i <= 7; i++) {
         Kalah currentKalah = new Kalah(new Board(currentNode.getBoard()));
@@ -71,20 +72,19 @@ public class AsdfBot {
           Side nextSide = currentKalah.makeMove(nextMove);
           Node nextChild = new Node(i, currentKalah.getBoard(), nextSide, 0, currentNode);
           currentNode.addNextMove(nextChild);
-          int po = assignNodes(nextChild, currentDepth + 1, alpha, beta);
+          assignNodes(nextChild, currentDepth + 1, alpha, beta);
 
-            if (nextChild.getPlayerSide() == this.getOurSide()) {
-              if (po > alpha)
-                alpha = po;
-              if (alpha >= beta)
-                return po;
-            }
-            else {
-              if (po > beta)
-                beta = po;
-              if (alpha >= beta)
-                return po;
-            }
+//          if (currentNode.getPlayerSide() == this.getOurSide()) {
+//            if (nextChild.getPayoff() > alpha)
+//              alpha = nextChild.getPayoff();
+//            if (alpha >= beta)
+//              break;
+//          } else {
+//            if (nextChild.getPayoff() < beta)
+//              beta = nextChild.getPayoff();
+//            if (alpha >= beta)
+//              break;
+//          }
         } // if
       } // for
 
@@ -106,14 +106,11 @@ public class AsdfBot {
         }
         currentNode.setPayoff(payoff + minValue);
       } // ifelse
-
-      return currentNode.getPayoff();
       // TODO: alphabeta pruning
     } else {
 
       int payoff = heuristic(currentNode, currentDepth);
       currentNode.setPayoff(payoff);
-      return payoff;
     } // ifelse
   }
 
@@ -136,7 +133,7 @@ public class AsdfBot {
     */
   private int heuristic(Node node, int currentDepth) {
 
-    int ef, w1 = 1, w2 = 1, w3 = 1, w4 = 10, w5 = 2, e1 = 0, e2 = 0, e3 = 0, e4 = 0, e5 = 0;
+    int ef, w1 = 0, w2 = 1, w3 = 0, w4 = 0, w5 = 1, w6 = 2, e1 = 0, e2 = 0, e3 = 0, e4 = 0, e5 = 0, e6 = 0;
 
     int ourSeedsInStore = node.getBoard().getSeedsInStore(ourSide);
     int oppSeedsInStore = node.getBoard().getSeedsInStore(ourSide.opposite());
@@ -162,7 +159,12 @@ public class AsdfBot {
     int ourSeeds = ourSeedsInStore;
     int oppSeeds = oppSeedsInStore;
 
-    for (int i = 1; i <= 4; i++) {
+    int asdf1 = ourSeedsInStore - parentOurSeedsInStore;
+    int asdf2 = oppSeedsInStore - parentOppSeedsInStore;
+
+    e6 = asdf1 - asdf2;
+
+    for (int i = 1; i <= 7; i++) {
       ourSeeds += node.getBoard().getSeeds(ourSide, i);
       oppSeeds += node.getBoard().getSeeds(ourSide.opposite(), i);
     }
@@ -183,7 +185,7 @@ public class AsdfBot {
         // if last move puts seed into store
         if ((parentMove + parentOurSeedsInHouse) % 8 == 0) {
           e4 = 1;
-          e3 = 1;
+          e3 = (parentMove + parentOurSeedsInHouse) / 8;
         } else if (parentMove + parentOurSeedsInStore > 8) {
           e4 = 0;
           e3 = (parentMove + parentOurSeedsInStore) / 8;
@@ -211,7 +213,7 @@ public class AsdfBot {
 
         if (parentMove + parentOppSeedsInHouse == 8) {
           e4 = -1;
-          e3 = -1;
+          e3 = -1 * (parentMove + parentOppSeedsInHouse)/8;
         } else if (parentMove + parentOppSeedsInStore > 8) {
           e4 = 0;
           e3 = -(parentMove + parentOppSeedsInStore) / 8;
@@ -249,7 +251,7 @@ public class AsdfBot {
 //        "store by getting nodes from opponent's house - so weight will be 50: " + w5);
 
 
-    ef = w1 * e1 + w2 * e2 + w3 * e3 + w4 * e4 + w5 * e5;
+    ef = w1 * e1 + w2 * e2 + w3 * e3 + w4 * e4 + w5 * e5 + w6 * e6;
     return ef;
   }
 
@@ -300,7 +302,9 @@ public class AsdfBot {
           // if this turn is our turn
           if (gameMessage.again) {
             // Get best move
+            counter = 0;
             int i = rightMove(canSwap, new Board(this.getAsdf().getBoard()));
+            System.err.println(counter);
             System.err.println("asdfBot decision: " + i);
 
             // if best right move is -1, it means asdfbot should swap
