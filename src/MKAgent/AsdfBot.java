@@ -44,7 +44,6 @@ public class AsdfBot {
 
       assignNodes(swap, 1);
 
-      System.err.println("Swap payoff!: " + swap.getPayoff());
       root.addNextMove(swap);
       swap();
     }
@@ -58,7 +57,6 @@ public class AsdfBot {
         bestMove = possibleMove.getName();
       }
     }
-    System.err.println("Best payoff!: " + maxValue);
 
     if (bestMove == 8) {
       return -1;
@@ -85,11 +83,9 @@ public class AsdfBot {
 
           if (!nextChild.getInNode() && i != 1 && currentDepth != DEPTH - 1 && currentDepth != DEPTH && currentNode.getPlayerSide() == this.getOurSide().opposite()) {
             if (nextChild.getPayoff() > pruning[currentDepth][1]) {
-              //System.err.println("beta value for " + currentDepth + ": " + pruning [currentDepth][1]);
               firstRec = false;
             }
             if ((nextChild.getPayoff() + currentNode.getPayoff()) < pruning[currentDepth][0]) {
-              //System.err.println("beta value for " + currentDepth + ": " + pruning [currentDepth][1]);
               firstRec = false;
             }
           }
@@ -267,13 +263,10 @@ public class AsdfBot {
     boolean canSwap = false;
 
     while ((mt = Protocol.getMessageType(s = Main.recvMsg())) != MsgType.END) {
-      System.err.println();
-      System.err.println("Received: " + s);
       switch (mt) {
         case START:
           // if true, our bot starts first
           boolean first = Protocol.interpretStartMsg(s);
-          System.err.println("asdfBot is starting: " + first);
           if (first) {
             // If we start first, set our side and "last player" variable
             this.setOurSide(Side.SOUTH);
@@ -281,7 +274,6 @@ public class AsdfBot {
             // Get best move
             int i = 1;//rightMove(canSwap, new Board(this.getAsdf().getBoard()));
             s = Protocol.createMoveMsg(i);
-            System.err.println("asdfBot start decision: " + i);
             Main.sendMsg(s);
           } else {
             // Set opponent side and last player
@@ -296,9 +288,6 @@ public class AsdfBot {
           Protocol.MoveTurn gameMessage = Protocol.interpretStateMsg(s, this
               .getAsdf().getBoard());
 
-          System.err.println("The board:\n" + this.getAsdf().getBoard());
-          System.err.println("asdfBot's turn: " + gameMessage.again + ". Last move: " + gameMessage.move);
-
           if (gameMessage.move == -1) {
             swap();
           } else {
@@ -308,7 +297,6 @@ public class AsdfBot {
           if (gameMessage.again) {
             // Get best move
             int i = rightMove(canSwap, new Board(this.getAsdf().getBoard()));
-            System.err.println("asdfBot decision: " + i);
 
             // if best right move is -1, it means asdfbot should swap
             if (i == -1) {
@@ -330,7 +318,6 @@ public class AsdfBot {
           break;
 
         case END:
-          System.err.println("Bye!");
           return;
       }
     }

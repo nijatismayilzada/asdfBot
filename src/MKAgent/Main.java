@@ -51,15 +51,10 @@ public class Main {
    */
   public static void main(String[] args) throws FileNotFoundException {
     try {
-      PrintWriter writer = new PrintWriter("/tmp/asdfBot.log");
-      writer.print("");
-      writer.close();
-      System.setErr(new PrintStream(new FileOutputStream(new File("/tmp/asdfBot.log"), true)));
       AsdfBot asdf = new AsdfBot(7, 7);
       asdf.cuddleRamin();
     } catch (Exception e) {
-      System.err.println("No no no... " + e);
-      e.printStackTrace(new PrintStream(new FileOutputStream(new File("/tmp/asdfBot.log"), true)));
+
     }
   }
 }
