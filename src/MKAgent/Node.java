@@ -10,6 +10,7 @@ public class Node {
   private int payoff = 0;
   private Node parent;
   private ArrayList<Node> nextMoves;
+  private boolean inNode = true;
 
   public Node() {
     this.nextMoves = new ArrayList<>();
@@ -39,6 +40,20 @@ public class Node {
     this(name, board, playerSide, payoff);
     this.setParent(parent);
   }
+
+  public Node(int name, Board board,  Side playerSide, int payoff, Node parent, boolean inNode) {
+    this(name, board, playerSide, payoff, parent);
+    this.setInNode(inNode);
+  }
+
+  public void setInNode(boolean inNode) {
+    this.inNode = inNode;
+  }
+
+  public boolean getInNode() {
+    return this.inNode;
+  }
+
 
   public void setBoard(Board board) {
     this.board = board;

@@ -1,6 +1,7 @@
 package MKAgent;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class AsdfBot {
 
@@ -8,6 +9,8 @@ public class AsdfBot {
   private Side ourSide;
   private Tree tree;
   private int DEPTH = 7;
+  private int[][] pruning = new int[DEPTH + 1][2];
+  private int count =0;
 
   public AsdfBot(int holes, int seeds) {
     this.asdfKalah = new Kalah(new Board(holes, seeds));
@@ -30,13 +33,19 @@ public class AsdfBot {
     Node root = new Node(0, board);
     root.setPlayerSide(this.getOurSide());
     tree.setRoot(root);
-    assignNodes(root, 1, Integer.MIN_VALUE, Integer.MAX_VALUE);
+    for (int i=0; i < DEPTH + 1; i++) {
+      pruning[i][0] = Integer.MIN_VALUE;
+      pruning[i][1] = Integer.MAX_VALUE;
+    }
+    assignNodes(root, 1);
 
     if (canSwap) {
       swap();
       Node swap = new Node(8, board);
       swap.setPlayerSide(this.getOurSide().opposite());
-      assignNodes(swap, 1, Integer.MIN_VALUE, Integer.MAX_VALUE);
+
+      assignNodes(swap, 1);
+
       System.err.println("Swap payoff!: " + swap.getPayoff());
       root.addNextMove(swap);
       swap();
@@ -59,34 +68,40 @@ public class AsdfBot {
     return bestMove;
   }
 
+boolean firstRec = true;
+boolean secondRec = true;
 
 
   // TODO: build tree more efficiently
-  private int assignNodes(Node currentNode, int currentDepth, int alpha, int beta) {
+  private void assignNodes(Node currentNode, int currentDepth) {
+    count++;
     if (currentDepth <= DEPTH) {
       for (int i = 1; i <= 7; i++) {
         Kalah currentKalah = new Kalah(new Board(currentNode.getBoard()));
         Move nextMove = new Move(currentNode.getPlayerSide(), i);
         if (currentKalah.isLegalMove(nextMove)) {
           Side nextSide = currentKalah.makeMove(nextMove);
-          Node nextChild = new Node(i, currentKalah.getBoard(), nextSide, 0, currentNode);
+          Node nextChild = new Node(i, currentKalah.getBoard(), nextSide, 0, currentNode, firstRec);
           currentNode.addNextMove(nextChild);
-          int po = assignNodes(nextChild, currentDepth + 1, alpha, beta);
+         if (secondRec)
+             assignNodes(nextChild, currentDepth + 1);
+          if (firstRec == false)
+            secondRec = false;
 
-            if (nextChild.getPlayerSide() == this.getOurSide()) {
-              if (po > alpha)
-                alpha = po;
-              if (alpha >= beta)
-                return po;
+          if ( !nextChild.getInNode() && i != 1 && currentDepth != DEPTH-1 && currentDepth != DEPTH && currentNode.getPlayerSide() == this.getOurSide().opposite()) {
+            if (nextChild.getPayoff() > pruning [currentDepth][1]) {
+              //System.err.println("beta value for " + currentDepth + ": " + pruning [currentDepth][1]);
+              firstRec = false;
             }
-            else {
-              if (po > beta)
-                beta = po;
-              if (alpha >= beta)
-                return po;
+            if ((nextChild.getPayoff() + currentNode.getPayoff()) < pruning [currentDepth][0]) {
+              //System.err.println("beta value for " + currentDepth + ": " + pruning [currentDepth][1]);
+              firstRec = false;
             }
+          }
         } // if
       } // for
+      firstRec = true;
+      secondRec= true;
 
       int payoff = heuristic(currentNode, currentDepth);
 
@@ -95,25 +110,32 @@ public class AsdfBot {
 
       if (currentNode.getPlayerSide() == this.getOurSide()) {
         for (Node nextNode : currentNode.getNextMoves()) {
-          if (nextNode.getPayoff() > maxValue)
+          if (nextNode.getPayoff() > maxValue  && !nextNode.getInNode())
             maxValue = nextNode.getPayoff();
         }
         currentNode.setPayoff(payoff + maxValue);
+        currentNode.setInNode(false);
       } else {
         for (Node nextNode : currentNode.getNextMoves()) {
-          if (nextNode.getPayoff() < minValue)
+          if (nextNode.getPayoff() < minValue && !nextNode.getInNode() )
             minValue = nextNode.getPayoff();
         }
         currentNode.setPayoff(payoff + minValue);
+        currentNode.setInNode(false);
       } // ifelse
 
-      return currentNode.getPayoff();
+      if (pruning [currentDepth][0] < currentNode.getPayoff())
+        pruning [currentDepth][0] = currentNode.getPayoff();
+      if (pruning [currentDepth][1] > currentNode.getPayoff())
+        pruning [currentDepth][1] = currentNode.getPayoff();
+
       // TODO: alphabeta pruning
     } else {
 
       int payoff = heuristic(currentNode, currentDepth);
       currentNode.setPayoff(payoff);
-      return payoff;
+      currentNode.setInNode(false);
+
     } // ifelse
   }
 
@@ -300,8 +322,10 @@ public class AsdfBot {
           // if this turn is our turn
           if (gameMessage.again) {
             // Get best move
+            count = 0;
             int i = rightMove(canSwap, new Board(this.getAsdf().getBoard()));
             System.err.println("asdfBot decision: " + i);
+            System.err.println("Tree node number: " + count);
 
             // if best right move is -1, it means asdfbot should swap
             if (i == -1) {
