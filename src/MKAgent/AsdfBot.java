@@ -69,7 +69,6 @@ public class AsdfBot {
   boolean firstRec = true;
   boolean secondRec = true;
 
-  // TODO: build tree more efficiently
   private void assignNodes(Node currentNode, int currentDepth) {
     if (currentDepth <= DEPTH) {
       for (int i = 1; i <= 7; i++) {
@@ -123,7 +122,6 @@ public class AsdfBot {
         pruning[currentDepth][0] = currentNode.getPayoff();
       if (pruning[currentDepth][1] > currentNode.getPayoff())
         pruning[currentDepth][1] = currentNode.getPayoff();
-      // TODO: alphabeta pruning
     } else {
 
       int payoff = heuristic(currentNode, currentDepth);
@@ -151,7 +149,7 @@ public class AsdfBot {
     */
   private int heuristic(Node node, int currentDepth) {
 
-    int ef, w1 = 1, w2 = 10, w3 = 0, w4 = 10, w5 = 0, w6 = 35, e1 = 0, e2 = 0, e3 = 0, e4 = 0, e5 = 0, e6 = 0;
+    int ef, w1 = 1, w2 = 1, w3 = 0, w4 = 10, w5 = 1, w6 = 35, e1 = 0, e2 = 0, e3 = 0, e4 = 0, e5 = 0, e6 = 0;
 
     int ourSeedsInStore = node.getBoard().getSeedsInStore(ourSide);
     int oppSeedsInStore = node.getBoard().getSeedsInStore(ourSide.opposite());
