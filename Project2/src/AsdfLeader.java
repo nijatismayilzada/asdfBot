@@ -10,7 +10,7 @@ import java.rmi.RemoteException;
  * the platform by calling the remote method provided by it.
  * @author Xin
  */
-final class PseudoLeader
+final class AsdfLeader
 	extends PlayerImpl
 {
 	/**
@@ -22,7 +22,7 @@ final class PseudoLeader
 	 * @throws RemoteException
 	 * @throws NotBoundException
 	 */
-	PseudoLeader()
+	AsdfLeader()
 		throws RemoteException, NotBoundException
 	{
 		/* The first parameter *MUST* be PlayerType.LEADER, you can change

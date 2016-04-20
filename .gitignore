@@ -22,6 +22,6 @@ nicat.got
 ramin.got
 
 # IntelliJ project files.
-asdfBot.iml
+*.iml
 .idea
 out
