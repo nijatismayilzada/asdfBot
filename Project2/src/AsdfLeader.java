@@ -97,7 +97,7 @@ final class AsdfLeader
   public void proceedNewDay(int p_date)
       throws RemoteException {
         /*
-		 * Check for new price
+         * Check for new price
 		 * Record l_newRecord = m_platformStub.query(m_type, p_date);
 		 *
 		 * Your own math model to compute the price here
@@ -107,11 +107,18 @@ final class AsdfLeader
 		 * Submit your new price, and end your phase
 		 * m_platformStub.publishPrice(m_type, l_newPrice);
 		 */
+    m_platformStub.publishPrice(PlayerType.LEADER, 2);
   }
 
   public static void main(final String[] p_args)
       throws RemoteException, NotBoundException {
     new AsdfLeader();
+  }
+
+  private float cl = 1;
+
+  private float sl(float ul, float uf) {
+    return (float) (2 - ul + 0.3 * uf);
   }
 
 }
