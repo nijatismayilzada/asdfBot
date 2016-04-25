@@ -117,8 +117,11 @@ final class AsdfLeader
 
 //    float ul[] = new float[101];
 //    float ufr[] = new float[101];
-    for (int i = 1; i <= 100; i++) {
+    for (int i = 1; i < p_date; i++) {
       Record l_newRecord = m_platformStub.query(PlayerType.LEADER, i);
+
+      m_platformStub.log(PlayerType.LEADER, "Day " + i + " Leader Price: " + l_newRecord.m_leaderPrice +
+          " Follower Price: " + l_newRecord.m_followerPrice);
 
       ul.add(l_newRecord.m_leaderPrice);
       ufr.add(l_newRecord.m_followerPrice);
@@ -130,19 +133,15 @@ final class AsdfLeader
     m_platformStub.log(PlayerType.LEADER, "ul size: " + ul.size());
     m_platformStub.log(PlayerType.LEADER, "a : " + a(ul, ufr) + " b: " + b(ul, ufr));
 
+    float maximisation = maximisation(a(ul, ufr), b(ul, ufr));
 
-    m_platformStub.publishPrice(PlayerType.LEADER, 2);
+
+    m_platformStub.publishPrice(PlayerType.LEADER, maximisation);
   }
 
   public static void main(final String[] p_args)
       throws RemoteException, NotBoundException {
     new AsdfLeader();
-  }
-
-  private float cl = 1;
-
-  private float sl(float ul, float uf) {
-    return (float) (2 - ul + 0.3 * uf);
   }
 
   private float a(ArrayList<Float> ul, ArrayList<Float> ufr) {
@@ -158,8 +157,6 @@ final class AsdfLeader
 
     float birinci = sum_ul_power_two * sum_ufr;
 
-    System.out.println("birinci: " + birinci);
-
     float sum_ul = 0;
     float sum_ul_ufr_multip = 0;
     for (int t = 0; t < T; t++) {
@@ -169,13 +166,11 @@ final class AsdfLeader
 
     float ikinci = sum_ul * sum_ul_ufr_multip;
 
-    System.out.println("ikinci: " + ikinci);
 
     float suret = birinci - ikinci;
 
     float mexrec = T * sum_ul_power_two - (float) Math.pow(sum_ul, 2);
 
-    System.out.println("mexrec: " + mexrec);
 
     return suret / mexrec;
   }
@@ -210,6 +205,10 @@ final class AsdfLeader
     float mexrec = T * sum_ul_power_two - (float) Math.pow(sum_ul, 2);
 
     return suret / mexrec;
+  }
+
+  private float maximisation(float a, float b) {
+    return (float) ((-3 - 0.3 * (a - b)) / (0.6 * b - 2));
   }
 
 }
