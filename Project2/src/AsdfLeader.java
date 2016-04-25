@@ -117,7 +117,7 @@ final class AsdfLeader
 
 //    float ul[] = new float[101];
 //    float ufr[] = new float[101];
-    for (int i = 1; i < p_date; i++) {
+    for (int i = p_date - 100; i < p_date; i++) {
       Record l_newRecord = m_platformStub.query(PlayerType.LEADER, i);
 
       m_platformStub.log(PlayerType.LEADER, "Day " + i + " Leader Price: " + l_newRecord.m_leaderPrice +
