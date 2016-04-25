@@ -1,8 +1,10 @@
 import comp34120.ex2.PlayerImpl;
 import comp34120.ex2.PlayerType;
+import comp34120.ex2.Record;
 
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 
 /**
  * A pseudo leader. The members m_platformStub and m_type are declared
@@ -107,6 +109,28 @@ final class AsdfLeader
 		 * Submit your new price, and end your phase
 		 * m_platformStub.publishPrice(m_type, l_newPrice);
 		 */
+
+    m_platformStub.log(PlayerType.LEADER, "kamil got");
+
+    ArrayList<Float> ul = new ArrayList<>();
+    ArrayList<Float> ufr = new ArrayList<>();
+
+//    float ul[] = new float[101];
+//    float ufr[] = new float[101];
+    for (int i = 1; i <= 100; i++) {
+      Record l_newRecord = m_platformStub.query(PlayerType.LEADER, i);
+
+      ul.add(l_newRecord.m_leaderPrice);
+      ufr.add(l_newRecord.m_followerPrice);
+
+//      m_platformStub.log(PlayerType.LEADER, "day " + i + " leader price is " + l_newRecord.m_leaderPrice);
+//      m_platformStub.log(PlayerType.LEADER, "day " + i + " follower price is " + l_newRecord.m_followerPrice);
+    }
+
+    m_platformStub.log(PlayerType.LEADER, "ul size: " + ul.size());
+    m_platformStub.log(PlayerType.LEADER, "a : " + a(ul, ufr) + " b: " + b(ul, ufr));
+
+
     m_platformStub.publishPrice(PlayerType.LEADER, 2);
   }
 
@@ -119,6 +143,73 @@ final class AsdfLeader
 
   private float sl(float ul, float uf) {
     return (float) (2 - ul + 0.3 * uf);
+  }
+
+  private float a(ArrayList<Float> ul, ArrayList<Float> ufr) {
+    int T = ul.size();
+
+    float sum_ul_power_two = 0;
+    float sum_ufr = 0;
+
+    for (int t = 0; t < T; t++) {
+      sum_ul_power_two += Math.pow(ul.get(t), 2);
+      sum_ufr += ufr.get(t);
+    }
+
+    float birinci = sum_ul_power_two * sum_ufr;
+
+    System.out.println("birinci: " + birinci);
+
+    float sum_ul = 0;
+    float sum_ul_ufr_multip = 0;
+    for (int t = 0; t < T; t++) {
+      sum_ul += ul.get(t);
+      sum_ul_ufr_multip += ul.get(t) * ufr.get(t);
+    }
+
+    float ikinci = sum_ul * sum_ul_ufr_multip;
+
+    System.out.println("ikinci: " + ikinci);
+
+    float suret = birinci - ikinci;
+
+    float mexrec = T * sum_ul_power_two - (float) Math.pow(sum_ul, 2);
+
+    System.out.println("mexrec: " + mexrec);
+
+    return suret / mexrec;
+  }
+
+  private float b(ArrayList<Float> ul, ArrayList<Float> ufr) {
+
+    int T = ul.size();
+
+    float sum_ul_ufr_multip = 0;
+    for (int t = 0; t < T; t++) {
+      sum_ul_ufr_multip += ul.get(t) * ufr.get(t);
+    }
+
+    float birinci = T * sum_ul_ufr_multip;
+
+    float sum_ul = 0;
+    float sum_ufr = 0;
+    for (int t = 0; t < T; t++) {
+      sum_ul += ul.get(t);
+      sum_ufr += ufr.get(t);
+    }
+
+    float ikinci = sum_ul * sum_ufr;
+
+    float suret = birinci - ikinci;
+
+    float sum_ul_power_two = 0;
+    for (int t = 0; t < T; t++) {
+      sum_ul_power_two += Math.pow(ul.get(t), 2);
+    }
+
+    float mexrec = T * sum_ul_power_two - (float) Math.pow(sum_ul, 2);
+
+    return suret / mexrec;
   }
 
 }
