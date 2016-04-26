@@ -73,6 +73,7 @@ final class AsdfLeader
       throws RemoteException {
     super.startSimulation(p_steps);
     //TO DO: delete the line above and put your own initialization code here
+    // m_platformStub.log(PlayerType.LEADER, "step: " + p_steps);
   }
 
   /**
@@ -85,8 +86,23 @@ final class AsdfLeader
   @Override
   public void endSimulation()
       throws RemoteException {
-    super.endSimulation();
-    //TO DO: delete the line above and put your own finalization code here
+    
+    Record l_newRecord = null;
+    int startDay = 101;
+    int endDay = 130;
+
+    float sumLeader = 0;
+    // float sumFollower = 0;
+
+    for (int day = startDay; day < endDay; day++) {
+      l_newRecord = m_platformStub.query(PlayerType.FOLLOWER, day);
+
+      sumLeader += (l_newRecord.m_leaderPrice - 1) * sl(l_newRecord.m_leaderPrice, l_newRecord.m_followerPrice);
+      // sumFollower += (l_newRecord.m_followerPrice - 1) * sl(l_newRecord.m_leaderPrice, l_newRecord.m_followerPrice);
+    }
+
+    m_platformStub.log(PlayerType.LEADER, "sumLeader: " + sumLeader);
+
   }
 
   /**
@@ -98,43 +114,23 @@ final class AsdfLeader
   @Override
   public void proceedNewDay(int p_date)
       throws RemoteException {
-        /*
-         * Check for new price
-		 * Record l_newRecord = m_platformStub.query(m_type, p_date);
-		 *
-		 * Your own math model to compute the price here
-		 * ...
-		 * float l_newPrice = ....
-		 *
-		 * Submit your new price, and end your phase
-		 * m_platformStub.publishPrice(m_type, l_newPrice);
-		 */
 
     m_platformStub.log(PlayerType.LEADER, "kamil got");
 
     ArrayList<Float> ul = new ArrayList<>();
     ArrayList<Float> ufr = new ArrayList<>();
 
-//    float ul[] = new float[101];
-//    float ufr[] = new float[101];
-    for (int i = p_date - 100; i < p_date; i++) {
+    for (int i = 1; i < p_date; i++) {
       Record l_newRecord = m_platformStub.query(PlayerType.LEADER, i);
-
-      m_platformStub.log(PlayerType.LEADER, "Day " + i + " Leader Price: " + l_newRecord.m_leaderPrice +
-          " Follower Price: " + l_newRecord.m_followerPrice);
 
       ul.add(l_newRecord.m_leaderPrice);
       ufr.add(l_newRecord.m_followerPrice);
-
-//      m_platformStub.log(PlayerType.LEADER, "day " + i + " leader price is " + l_newRecord.m_leaderPrice);
-//      m_platformStub.log(PlayerType.LEADER, "day " + i + " follower price is " + l_newRecord.m_followerPrice);
     }
 
     m_platformStub.log(PlayerType.LEADER, "ul size: " + ul.size());
     m_platformStub.log(PlayerType.LEADER, "a : " + a(ul, ufr) + " b: " + b(ul, ufr));
 
     float maximisation = maximisation(a(ul, ufr), b(ul, ufr));
-
 
     m_platformStub.publishPrice(PlayerType.LEADER, maximisation);
   }
@@ -209,6 +205,10 @@ final class AsdfLeader
 
   private float maximisation(float a, float b) {
     return (float) ((-3 - 0.3 * (a - b)) / (0.6 * b - 2));
+  }
+
+  private float sl(float ul, float uf) {
+    return (float) (2 - ul + 0.3 * uf);
   }
 
 }
