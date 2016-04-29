@@ -73,7 +73,32 @@ final class AsdfLeader
       throws RemoteException {
     super.startSimulation(p_steps);
     //TO DO: delete the line above and put your own initialization code here
-    // m_platformStub.log(PlayerType.LEADER, "step: " + p_steps);
+
+    m_platformStub.log(PlayerType.LEADER, "step: " + p_steps);
+
+      m_platformStub.log(PlayerType.LEADER, "kamil got");
+
+      ArrayList<Float> ul = new ArrayList<>();
+      ArrayList<Float> ufr = new ArrayList<>();
+
+      for (int i = 1; i < 31; i++) {
+          Record l_newRecord = m_platformStub.query(PlayerType.LEADER, i);
+
+          ul.add(l_newRecord.m_leaderPrice);
+          ufr.add(l_newRecord.m_followerPrice);
+      }
+
+
+      float value_of_b = b(ul, ufr);
+      m_platformStub.log(PlayerType.LEADER, "ul size: " + ul.size());
+      m_platformStub.log(PlayerType.LEADER, "a : " + a(ul, ufr) + " b: " + value_of_b);
+      if (value_of_b > 3.33) m_platformStub.log(PlayerType.LEADER, "Warning Warning!! b is " + value_of_b);
+
+      float maximisation = maximisation(a(ul, ufr), b(ul, ufr));
+
+      m_platformStub.log(PlayerType.LEADER, "training ul: " + maximisation);
+//      m_platformStub.publishPrice(PlayerType.LEADER, maximisation);
+
   }
 
   /**
@@ -127,8 +152,10 @@ final class AsdfLeader
       ufr.add(l_newRecord.m_followerPrice);
     }
 
+    float value_of_b = b(ul, ufr);
     m_platformStub.log(PlayerType.LEADER, "ul size: " + ul.size());
-    m_platformStub.log(PlayerType.LEADER, "a : " + a(ul, ufr) + " b: " + b(ul, ufr));
+    m_platformStub.log(PlayerType.LEADER, "a : " + a(ul, ufr) + " b: " + value_of_b);
+    if (value_of_b > 3.33) m_platformStub.log(PlayerType.LEADER, "Warning Warning!! b is " + value_of_b);
 
     float maximisation = maximisation(a(ul, ufr), b(ul, ufr));
 
