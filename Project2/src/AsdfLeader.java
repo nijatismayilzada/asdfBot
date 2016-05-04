@@ -111,7 +111,7 @@ final class AsdfLeader
   @Override
   public void endSimulation()
       throws RemoteException {
-    
+
     Record l_newRecord = null;
     int startDay = 101;
     int endDay = 130;
@@ -145,7 +145,7 @@ final class AsdfLeader
     ArrayList<Float> ul = new ArrayList<>();
     ArrayList<Float> ufr = new ArrayList<>();
 
-    for (int i = 1; i < p_date; i++) {
+    for (int i = p_date-30; i < p_date; i++) {
       Record l_newRecord = m_platformStub.query(PlayerType.LEADER, i);
 
       ul.add(l_newRecord.m_leaderPrice);
@@ -159,8 +159,36 @@ final class AsdfLeader
 
     float maximisation = maximisation(a(ul, ufr), b(ul, ufr));
 
+
+    float forget = (float) 0.95;
+    float sigma = 100;
+
+    ArrayList<Float> P = new ArrayList<>();
+    ArrayList<Float> w = new ArrayList<>();
+    ArrayList<Float> a = new ArrayList<>();
+    ArrayList<Float> g = new ArrayList<>();
+
+    P.add(0, 1/sigma * 1);
+    w.add(0, (float) 0);
+    a.add(0, (float) 0);
+    g.add(0, (float) 0);
+
+
+    for(int n=1; n<=ul.size(); n++)
+    {
+      //ul and ufr n-1 operation is because of arraylist starting index
+      a.add(n, ufr.get(n-1) - ul.get(n-1) * w.get(n-1));
+      g.add(n, P.get(n-1)*ul.get(n-1)*(1/(forget + ul.get(n-1)*P.get(n-1)*ul.get(n-1))));
+      P.add(n, 1/forget * P.get(n-1) - g.get(n)*ul.get(n-1)*(1/forget)*P.get(n-1));
+      w.add(n, w.get(n-1) + a.get(n) * g.get(n));
+    }
+    float delta = w.get(ul.size()) - w.get(ul.size()-1);
+    float newPrice = maximisation + delta;
+
     m_platformStub.publishPrice(PlayerType.LEADER, maximisation);
   }
+
+
 
   public static void main(final String[] p_args)
       throws RemoteException, NotBoundException {
@@ -172,7 +200,6 @@ final class AsdfLeader
 
     float sum_ul_power_two = 0;
     float sum_ufr = 0;
-
     for (int t = 0; t < T; t++) {
       sum_ul_power_two += Math.pow(ul.get(t), 2);
       sum_ufr += ufr.get(t);
@@ -212,6 +239,7 @@ final class AsdfLeader
     float sum_ul = 0;
     float sum_ufr = 0;
     for (int t = 0; t < T; t++) {
+
       sum_ul += ul.get(t);
       sum_ufr += ufr.get(t);
     }
@@ -222,7 +250,7 @@ final class AsdfLeader
 
     float sum_ul_power_two = 0;
     for (int t = 0; t < T; t++) {
-      sum_ul_power_two += Math.pow(ul.get(t), 2);
+      sum_ul_power_two += Math.pow(ul.get(t), 2) ;
     }
 
     float mexrec = T * sum_ul_power_two - (float) Math.pow(sum_ul, 2);
