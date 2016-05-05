@@ -30,7 +30,7 @@ final class AsdfLeader
   private Matrix P;
   private Matrix phi;
   private float lambda = (float) 0.96;
-  private int historyDays = 99;
+  private int historyDays = 100;
   ArrayList<Float> ul = new ArrayList<>();
   ArrayList<Float> ufr = new ArrayList<>();
 
@@ -87,7 +87,7 @@ final class AsdfLeader
 
     m_platformStub.log(PlayerType.LEADER, "step: " + p_steps);
 
-      for (int i = 1; i < 100; i++) {
+      for (int i = 1; i <= 100; i++) {
           Record l_newRecord = m_platformStub.query(PlayerType.LEADER, i);
 
           ul.add(l_newRecord.m_leaderPrice);
@@ -146,11 +146,16 @@ final class AsdfLeader
   public void proceedNewDay(int p_date)
       throws RemoteException {
 
+    if(p_date!=101)
+    {
+      Record l_newRecord = m_platformStub.query(PlayerType.LEADER, p_date-1);
+      RLSUpdate(l_newRecord.m_leaderPrice, l_newRecord.m_followerPrice);
+    }
 
-    m_platformStub.log(PlayerType.LEADER, "kamil got");
+    float maximisation = maximisation(thetaToReaction().getA(), thetaToReaction().getB());
 
-    Record l_newRecord = m_platformStub.query(PlayerType.LEADER, p_date-1);
-    RLSUpdate(l_newRecord.m_leaderPrice, l_newRecord.m_followerPrice);
+    m_platformStub.log(PlayerType.LEADER, "new ul: " + maximisation);
+    m_platformStub.publishPrice(PlayerType.LEADER, maximisation);
 
 //    for (int i = p_date-30; i < p_date; i++) {
 //
@@ -158,7 +163,7 @@ final class AsdfLeader
 //      ul.add(l_newRecord.m_leaderPrice);
 //      ufr.add(l_newRecord.m_followerPrice);
 //    }
-//
+
 //    float value_of_b = b(ul, ufr);
 //    m_platformStub.log(PlayerType.LEADER, "ul size: " + ul.size());
 //    m_platformStub.log(PlayerType.LEADER, "a : " + a(ul, ufr) + " b: " + value_of_b);
@@ -188,11 +193,7 @@ final class AsdfLeader
 //    }
 //    float delta = w.get(ul.size()) - w.get(ul.size()-1);
 //    float newPrice = maximisation + delta;
-
-    float maximisation = maximisation(thetaToReaction().getA(), thetaToReaction().getB());
-
-    m_platformStub.log(PlayerType.LEADER, "new ul: " + maximisation);
-    m_platformStub.publishPrice(PlayerType.LEADER, maximisation);
+//    float maximisation = maximisation(a(ul, ufr), b(ul, ufr));
   }
 
 
