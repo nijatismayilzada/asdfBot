@@ -7,7 +7,7 @@ public class ReactionFunction {
     this.b = b;
   }
 
-  public double getA() {
+  public float getA() {
     return a;
   }
 
@@ -15,7 +15,7 @@ public class ReactionFunction {
     this.a = a;
   }
 
-  public double getB() {
+  public float getB() {
     return b;
   }
 

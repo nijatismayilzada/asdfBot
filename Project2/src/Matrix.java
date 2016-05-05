@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 // 2D Matrix library by Princeton University:
 // http://introcs.cs.princeton.edu/java/95linear/Matrix.java.html
 final public class Matrix {
@@ -40,6 +42,17 @@ final public class Matrix {
     for (int i = 0; i < N; i++)
       I.data[i][i] = 1;
     return I;
+  }
+
+  public Matrix invert() {
+    Matrix A = new Matrix(M,N);
+    float denominator = (this.data[0][0] * this.data[1][1] - this.data[1][0] * this.data[0][1]);
+    A.data[0][0] = this.data[1][1] / denominator;
+    A.data[1][1] = this.data[0][0] / denominator;
+    A.data[0][1] = -this.data[0][1] / denominator;
+    A.data[1][0] = -this.data[1][0] / denominator;
+
+    return A;
   }
 
   // swap rows i and j
@@ -234,5 +247,14 @@ final public class Matrix {
 
     A.times(x).show();
 
+  }
+
+  @Override
+  public String toString() {
+    return "Matrix{" +
+            "M=" + M +
+            ", N=" + N +
+            ", data=" + Arrays.toString(data) +
+            '}';
   }
 }

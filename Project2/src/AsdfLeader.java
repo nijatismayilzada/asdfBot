@@ -30,6 +30,9 @@ final class AsdfLeader
   private Matrix P;
   private Matrix phi;
   private float lambda = (float) 0.96;
+  private int historyDays = 99;
+  ArrayList<Float> ul = new ArrayList<>();
+  ArrayList<Float> ufr = new ArrayList<>();
 
   AsdfLeader()
       throws RemoteException, NotBoundException {
@@ -84,12 +87,7 @@ final class AsdfLeader
 
     m_platformStub.log(PlayerType.LEADER, "step: " + p_steps);
 
-      m_platformStub.log(PlayerType.LEADER, "kamil got");
-
-      ArrayList<Float> ul = new ArrayList<>();
-      ArrayList<Float> ufr = new ArrayList<>();
-
-      for (int i = 1; i < 31; i++) {
+      for (int i = 1; i < 100; i++) {
           Record l_newRecord = m_platformStub.query(PlayerType.LEADER, i);
 
           ul.add(l_newRecord.m_leaderPrice);
@@ -97,15 +95,15 @@ final class AsdfLeader
       }
 
 
-      float value_of_b = b(ul, ufr);
-      m_platformStub.log(PlayerType.LEADER, "ul size: " + ul.size());
-      m_platformStub.log(PlayerType.LEADER, "a : " + a(ul, ufr) + " b: " + value_of_b);
-      if (value_of_b > 3.33) m_platformStub.log(PlayerType.LEADER, "Warning Warning!! b is " + value_of_b);
+//      float value_of_b = b(ul, ufr);
+//      m_platformStub.log(PlayerType.LEADER, "ul size: " + ul.size());
+//      m_platformStub.log(PlayerType.LEADER, "a : " + a(ul, ufr) + " b: " + value_of_b);
+//      if (value_of_b > 3.33) m_platformStub.log(PlayerType.LEADER, "Warning Warning!! b is " + value_of_b);
+    initialCondition();
 
-      float maximisation = maximisation(a(ul, ufr), b(ul, ufr));
+      float maximisation = maximisation(thetaToReaction().getA(), thetaToReaction().getB());
 
       m_platformStub.log(PlayerType.LEADER, "training ul: " + maximisation);
-//      m_platformStub.publishPrice(PlayerType.LEADER, maximisation);
 
   }
 
@@ -148,22 +146,23 @@ final class AsdfLeader
   public void proceedNewDay(int p_date)
       throws RemoteException {
 
+
     m_platformStub.log(PlayerType.LEADER, "kamil got");
 
-    ArrayList<Float> ul = new ArrayList<>();
-    ArrayList<Float> ufr = new ArrayList<>();
+    Record l_newRecord = m_platformStub.query(PlayerType.LEADER, p_date-1);
+    RLSUpdate(l_newRecord.m_leaderPrice, l_newRecord.m_followerPrice);
 
-    for (int i = p_date-30; i < p_date; i++) {
-      Record l_newRecord = m_platformStub.query(PlayerType.LEADER, i);
-
-      ul.add(l_newRecord.m_leaderPrice);
-      ufr.add(l_newRecord.m_followerPrice);
-    }
-
-    float value_of_b = b(ul, ufr);
-    m_platformStub.log(PlayerType.LEADER, "ul size: " + ul.size());
-    m_platformStub.log(PlayerType.LEADER, "a : " + a(ul, ufr) + " b: " + value_of_b);
-    if (value_of_b > 3.33) m_platformStub.log(PlayerType.LEADER, "Warning Warning!! b is " + value_of_b);
+//    for (int i = p_date-30; i < p_date; i++) {
+//
+//
+//      ul.add(l_newRecord.m_leaderPrice);
+//      ufr.add(l_newRecord.m_followerPrice);
+//    }
+//
+//    float value_of_b = b(ul, ufr);
+//    m_platformStub.log(PlayerType.LEADER, "ul size: " + ul.size());
+//    m_platformStub.log(PlayerType.LEADER, "a : " + a(ul, ufr) + " b: " + value_of_b);
+//    if (value_of_b > 3.33) m_platformStub.log(PlayerType.LEADER, "Warning Warning!! b is " + value_of_b);
 
 //    float forget = (float) 0.95;
 //    float sigma = 100;
@@ -190,8 +189,9 @@ final class AsdfLeader
 //    float delta = w.get(ul.size()) - w.get(ul.size()-1);
 //    float newPrice = maximisation + delta;
 
+    float maximisation = maximisation(thetaToReaction().getA(), thetaToReaction().getB());
 
-    float maximisation = maximisation(a(ul, ufr), b(ul, ufr));
+    m_platformStub.log(PlayerType.LEADER, "new ul: " + maximisation);
     m_platformStub.publishPrice(PlayerType.LEADER, maximisation);
   }
 
@@ -200,6 +200,31 @@ final class AsdfLeader
   public static void main(final String[] p_args)
       throws RemoteException, NotBoundException {
     new AsdfLeader();
+  }
+
+  public void initialCondition() {
+
+    for (int day = 1; day <= historyDays; day++) {
+      phi = this.assignPhi(ul.get(day-1));
+      P = (phi).times(phi.transpose()).times((float) Math.pow(lambda, historyDays - day));
+      theta = (phi).times(ufr.get(day-1)).times((float) Math.pow(lambda, historyDays - day));
+    }
+
+    System.out.println(P);
+
+    theta = P.invert().times(theta);
+  }
+
+  private Matrix assignPhi(float v) {
+    Matrix A = new Matrix(1,2);
+    A.data[0][0]= 1;
+    A.data[0][1] = v;
+
+    return A;
+  }
+
+  private ReactionFunction thetaToReaction(){
+    return new ReactionFunction(theta.data[0][0], theta.data[1][0]);
   }
 
   public void RLSUpdate(float newUl, float newUf){
