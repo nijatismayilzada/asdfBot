@@ -26,9 +26,17 @@ final class AsdfLeader
    * @throws RemoteException
    * @throws NotBoundException
    */
+  private Matrix theta;
+  private Matrix P;
+  private Matrix phi;
+  private float lambda = (float) 0.96;
+
   AsdfLeader()
       throws RemoteException, NotBoundException {
     super(PlayerType.LEADER, "AsdfLeader");
+    theta = new Matrix(2,1);
+    P = new Matrix(2,2);
+    phi = new Matrix(1,2);
   }
 
   /**
@@ -157,34 +165,33 @@ final class AsdfLeader
     m_platformStub.log(PlayerType.LEADER, "a : " + a(ul, ufr) + " b: " + value_of_b);
     if (value_of_b > 3.33) m_platformStub.log(PlayerType.LEADER, "Warning Warning!! b is " + value_of_b);
 
+//    float forget = (float) 0.95;
+//    float sigma = 100;
+//
+//    ArrayList<Float> P = new ArrayList<>();
+//    ArrayList<Float> w = new ArrayList<>();
+//    ArrayList<Float> a = new ArrayList<>();
+//    ArrayList<Float> g = new ArrayList<>();
+//
+//    P.add(0, 1/sigma * 1);
+//    w.add(0, (float) 0);
+//    a.add(0, (float) 0);
+//    g.add(0, (float) 0);
+//
+//
+//    for(int n=1; n<=ul.size(); n++)
+//    {
+//      //ul and ufr n-1 operation is because of arraylist starting index
+//      a.add(n, ufr.get(n-1) - ul.get(n-1) * w.get(n-1));
+//      g.add(n, P.get(n-1)*ul.get(n-1)*(1/(forget + ul.get(n-1)*P.get(n-1)*ul.get(n-1))));
+//      P.add(n, 1/forget * P.get(n-1) - g.get(n)*ul.get(n-1)*(1/forget)*P.get(n-1));
+//      w.add(n, w.get(n-1) + a.get(n) * g.get(n));
+//    }
+//    float delta = w.get(ul.size()) - w.get(ul.size()-1);
+//    float newPrice = maximisation + delta;
+
+
     float maximisation = maximisation(a(ul, ufr), b(ul, ufr));
-
-
-    float forget = (float) 0.95;
-    float sigma = 100;
-
-    ArrayList<Float> P = new ArrayList<>();
-    ArrayList<Float> w = new ArrayList<>();
-    ArrayList<Float> a = new ArrayList<>();
-    ArrayList<Float> g = new ArrayList<>();
-
-    P.add(0, 1/sigma * 1);
-    w.add(0, (float) 0);
-    a.add(0, (float) 0);
-    g.add(0, (float) 0);
-
-
-    for(int n=1; n<=ul.size(); n++)
-    {
-      //ul and ufr n-1 operation is because of arraylist starting index
-      a.add(n, ufr.get(n-1) - ul.get(n-1) * w.get(n-1));
-      g.add(n, P.get(n-1)*ul.get(n-1)*(1/(forget + ul.get(n-1)*P.get(n-1)*ul.get(n-1))));
-      P.add(n, 1/forget * P.get(n-1) - g.get(n)*ul.get(n-1)*(1/forget)*P.get(n-1));
-      w.add(n, w.get(n-1) + a.get(n) * g.get(n));
-    }
-    float delta = w.get(ul.size()) - w.get(ul.size()-1);
-    float newPrice = maximisation + delta;
-
     m_platformStub.publishPrice(PlayerType.LEADER, maximisation);
   }
 
@@ -193,6 +200,21 @@ final class AsdfLeader
   public static void main(final String[] p_args)
       throws RemoteException, NotBoundException {
     new AsdfLeader();
+  }
+
+  public void RLSUpdate(float newUl, float newUf){
+    // Updated Theta = Old Theta + L_T+1 * [y(T+1) - Fi^ti[X(T+1)] * Theta_T]
+
+    Matrix numeratorL = P.times(phi);
+    Matrix denumeratorL = phi.transpose().times(P).times(phi).plus(lambda);
+    Matrix L = numeratorL.divide(denumeratorL.data[0][0]);
+
+    theta = theta.plus(L.times(newUf - phi.transpose().times(theta).data[0][0]));
+
+    Matrix numeratorP = P.times(phi).times(phi.transpose()).times(P);
+    Matrix denumeratorP = phi.transpose().times(P).times(phi).plus(lambda);
+    P = P.minus(numeratorP.divide(denumeratorP.data[0][0])).divide(lambda);
+
   }
 
   private float a(ArrayList<Float> ul, ArrayList<Float> ufr) {
