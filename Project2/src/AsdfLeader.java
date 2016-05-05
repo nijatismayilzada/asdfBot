@@ -39,7 +39,7 @@ final class AsdfLeader
     super(PlayerType.LEADER, "AsdfLeader");
     theta = new Matrix(2,1);
     P = new Matrix(2,2);
-    phi = new Matrix(1,2);
+    phi = new Matrix(2,1);
   }
 
   /**
@@ -202,23 +202,24 @@ final class AsdfLeader
     new AsdfLeader();
   }
 
-  public void initialCondition() {
+  public void initialCondition() throws RemoteException {
 
+    Matrix sumPhi = new Matrix(2, 2);
     for (int day = 1; day <= historyDays; day++) {
       phi = this.assignPhi(ul.get(day-1));
-      P = (phi).times(phi.transpose()).times((float) Math.pow(lambda, historyDays - day));
-      theta = (phi).times(ufr.get(day-1)).times((float) Math.pow(lambda, historyDays - day));
-    }
 
-    System.out.println(P);
+      sumPhi = sumPhi.plus(phi.times(phi.transpose()).times((float) Math.pow(lambda, historyDays - day)));
+      theta = theta.plus(phi.times(ufr.get(day-1)).times((float) Math.pow(lambda, historyDays - day)));
+    }
+    P = new Matrix(sumPhi);
 
     theta = P.invert().times(theta);
   }
 
   private Matrix assignPhi(float v) {
-    Matrix A = new Matrix(1,2);
+    Matrix A = new Matrix(2,1);
     A.data[0][0]= 1;
-    A.data[0][1] = v;
+    A.data[1][0] = v;
 
     return A;
   }
@@ -229,6 +230,8 @@ final class AsdfLeader
 
   public void RLSUpdate(float newUl, float newUf){
     // Updated Theta = Old Theta + L_T+1 * [y(T+1) - Fi^ti[X(T+1)] * Theta_T]
+
+    phi = this.assignPhi(newUl);
 
     Matrix numeratorL = P.times(phi);
     Matrix denumeratorL = phi.transpose().times(P).times(phi).plus(lambda);

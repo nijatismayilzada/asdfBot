@@ -12,6 +12,9 @@ final public class Matrix {
     this.M = M;
     this.N = N;
     data = new float[M][N];
+    for (int i = 0; i < M; i++)
+      for (int j = 0; j < N; j++)
+        this.data[i][j] = 0;
   }
 
   // create matrix based on 2d array
