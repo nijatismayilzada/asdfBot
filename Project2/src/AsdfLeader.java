@@ -245,7 +245,6 @@ final class AsdfLeader
     return (2 - ul + 0.3 * uf);
   }
 
-
   /* Recursive Least Square Method */
 
   private Matrix theta;
@@ -266,6 +265,11 @@ final class AsdfLeader
       return maximisation(thetaToReaction().getA(), thetaToReaction().getB());
     }
     else {
+      System.out.println("thetaToReaction()");
+      System.out.println(thetaToReaction().getA());
+      System.out.println(thetaToReaction().getB());
+      System.out.println(thetaToReaction().getC());
+
       return maximisation(thetaToReaction().getA(), thetaToReaction().getB(), thetaToReaction().getC());
     }
   }
@@ -312,7 +316,6 @@ final class AsdfLeader
       theta = P.invert().times(tempTheta);
 
       if (day > 1) {
-
         if (DIMENSION == 2) {
           approxX = maximisation(thetaToReaction().getA(), thetaToReaction().getB());
           reactY = thetaToReaction().getA() + thetaToReaction().getB() * approxX;
@@ -322,7 +325,6 @@ final class AsdfLeader
           reactY = thetaToReaction().getA() + thetaToReaction().getB() * approxX + thetaToReaction().getC() * Math
               .pow(approxX, 2);
         }
-
 
         Record l_newRecord = m_platformStub.query(PlayerType.LEADER, day);
         y = l_newRecord.m_followerPrice;
