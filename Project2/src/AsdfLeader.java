@@ -76,11 +76,11 @@ final class AsdfLeader
     ufr.clear();
     steps = p_steps;
 
-    m_platformStub.log(PlayerType.LEADER, "startDay: " + startDay + " / steps: " + steps);
+    m_platformStub.log(PlayerType.LEADER, "START_DAY: " + START_DAY + " / steps: " + steps);
 
     m_platformStub.log(PlayerType.LEADER, "step: " + p_steps);
 
-    for (int i = 1; i <= historyDays; i++) {
+    for (int i = 1; i <= HISTORY_DAYS; i++) {
       Record l_newRecord = m_platformStub.query(PlayerType.LEADER, i);
 
       ul.add(l_newRecord.m_leaderPrice);
@@ -105,11 +105,11 @@ final class AsdfLeader
   public void endSimulation()
       throws RemoteException {
 
-    int endDay = startDay + steps;
+    int endDay = START_DAY + steps;
 
     float sumLeader = 0;
 
-    for (int day = startDay; day < endDay; day++) {
+    for (int day = START_DAY; day < endDay; day++) {
       Record l_newRecord = m_platformStub.query(PlayerType.FOLLOWER, day);
 
       m_platformStub.log(PlayerType.LEADER, "day " + day + " / leader price: " + l_newRecord.m_leaderPrice + " / " +
@@ -132,8 +132,8 @@ final class AsdfLeader
   public void proceedNewDay(int p_date)
       throws RemoteException {
 
-    float publishPrice = RLS(p_date);
-//    float publishPrice = OLS(p_date, 30, 0.96F);
+//    float publishPrice = RLS(p_date);
+    float publishPrice = OLS(p_date);
 
     m_platformStub.log(PlayerType.LEADER, "publishPrice: " + publishPrice);
     m_platformStub.publishPrice(PlayerType.LEADER, publishPrice);
@@ -145,18 +145,19 @@ final class AsdfLeader
     new AsdfLeader();
   }
 
+  private int WINDOW_SIZE = 20;
+  private int START_DAY = 101;
+  private float LAMBDA = 0.96F;
+  private int HISTORY_DAYS = 100;
+
   /* Ordinary Least Square Method */
 
-  private float forgettingFactor;
-
-  private float OLS(int p_date, int windowSize, float forgettingFactor) throws RemoteException {
-
-    this.forgettingFactor = forgettingFactor;
+  private float OLS(int p_date) throws RemoteException {
 
     ArrayList<Float> ul = new ArrayList<>();
     ArrayList<Float> ufr = new ArrayList<>();
 
-    for (int day = p_date - windowSize; day < p_date; day++) {
+    for (int day = p_date - WINDOW_SIZE; day < p_date; day++) {
       Record l_newRecord = m_platformStub.query(PlayerType.LEADER, day);
       ul.add(l_newRecord.m_leaderPrice);
       ufr.add(l_newRecord.m_followerPrice);
@@ -177,68 +178,55 @@ final class AsdfLeader
 
   private float a(ArrayList<Float> ul, ArrayList<Float> ufr) {
     int T = ul.size();
-
     float sum_ul_power_two = 0;
     float sum_ufr = 0;
     for (int t = 0; t < T; t++) {
-      sum_ul_power_two += Math.pow(ul.get(t), 2);
-      sum_ufr += ufr.get(t);
+      double p_lambda = Math.pow(LAMBDA, T - t + 1);
+      sum_ul_power_two += Math.pow(ul.get(t), 2) * p_lambda;
+      sum_ufr += ufr.get(t) * p_lambda;
     }
-
     float birinci = sum_ul_power_two * sum_ufr;
-
     float sum_ul = 0;
     float sum_ul_ufr_multip = 0;
     for (int t = 0; t < T; t++) {
-      sum_ul += ul.get(t);
-      sum_ul_ufr_multip += ul.get(t) * ufr.get(t);
+      double p_lambda = Math.pow(LAMBDA, T - t + 1);
+      sum_ul += ul.get(t) * p_lambda;
+      sum_ul_ufr_multip += ul.get(t) * ufr.get(t) * p_lambda;
     }
-
     float ikinci = sum_ul * sum_ul_ufr_multip;
-
-
     float suret = birinci - ikinci;
-
     float mexrec = T * sum_ul_power_two - (float) Math.pow(sum_ul, 2);
-
     return suret / mexrec;
   }
 
   private float b(ArrayList<Float> ul, ArrayList<Float> ufr) {
-
     int T = ul.size();
-
     float sum_ul_ufr_multip = 0;
     for (int t = 0; t < T; t++) {
-      sum_ul_ufr_multip += ul.get(t) * ufr.get(t);
+      double p_lambda = Math.pow(LAMBDA, T - t + 1);
+      sum_ul_ufr_multip += ul.get(t) * ufr.get(t) * p_lambda;
     }
-
     float birinci = T * sum_ul_ufr_multip;
-
     float sum_ul = 0;
     float sum_ufr = 0;
     for (int t = 0; t < T; t++) {
-
-      sum_ul += ul.get(t);
-      sum_ufr += ufr.get(t);
+      double p_lambda = Math.pow(LAMBDA, T - t + 1);
+      sum_ul += ul.get(t) * p_lambda;
+      sum_ufr += ufr.get(t) * p_lambda;
     }
-
     float ikinci = sum_ul * sum_ufr;
-
     float suret = birinci - ikinci;
-
     float sum_ul_power_two = 0;
     for (int t = 0; t < T; t++) {
-      sum_ul_power_two += Math.pow(ul.get(t), 2);
+      double p_lambda = Math.pow(LAMBDA, T - t + 1);
+      sum_ul_power_two += Math.pow(ul.get(t), 2) * p_lambda;
     }
-
     float mexrec = T * sum_ul_power_two - (float) Math.pow(sum_ul, 2);
-
     return suret / mexrec;
   }
 
   private float maximisation(float a, float b) {
-    return (float) ((-3 - 0.3 * (a - b)) / (0.6 * b - 2));
+    return (float) ((3 + 0.3 * (a - b)) / (2 - 0.6 * b));
   }
 
   private float sl(float ul, float uf) {
@@ -252,14 +240,11 @@ final class AsdfLeader
   private Matrix P;
   private Matrix phi;
   private int steps;
-  private int startDay = 101;
-  private float lambda = (float) 0.96;
-  private int historyDays = 100;
   ArrayList<Float> ul = new ArrayList<>();
   ArrayList<Float> ufr = new ArrayList<>();
 
   private float RLS(int p_date) throws RemoteException {
-    if (p_date != startDay) {
+    if (p_date != START_DAY) {
       Record l_newRecord = m_platformStub.query(PlayerType.LEADER, p_date - 1);
       RLSUpdate(l_newRecord.m_leaderPrice, l_newRecord.m_followerPrice);
     }
@@ -273,14 +258,14 @@ final class AsdfLeader
     phi = this.assignPhi(newUl);
 
     Matrix numeratorL = P.times(phi);
-    Matrix denumeratorL = phi.transpose().times(P).times(phi).plus(lambda);
+    Matrix denumeratorL = phi.transpose().times(P).times(phi).plus(LAMBDA);
     Matrix L = numeratorL.divide(denumeratorL.data[0][0]);
 
     theta = theta.plus(L.times(newUf - phi.transpose().times(theta).data[0][0]));
 
     Matrix numeratorP = P.times(phi).times(phi.transpose()).times(P);
-    Matrix denumeratorP = phi.transpose().times(P).times(phi).plus(lambda);
-    P = P.minus(numeratorP.divide(denumeratorP.data[0][0])).divide(lambda);
+    Matrix denumeratorP = phi.transpose().times(P).times(phi).plus(LAMBDA);
+    P = P.minus(numeratorP.divide(denumeratorP.data[0][0])).divide(LAMBDA);
   }
 
   private void RLSInitialize() throws RemoteException {
@@ -289,11 +274,11 @@ final class AsdfLeader
     phi = new Matrix(2, 1);
 
     Matrix sumPhi = new Matrix(2, 2);
-    for (int day = 1; day <= historyDays; day++) {
+    for (int day = 1; day <= HISTORY_DAYS; day++) {
       phi = this.assignPhi(ul.get(day - 1));
 
-      sumPhi = sumPhi.plus(phi.times(phi.transpose()).times((float) Math.pow(lambda, historyDays - day)));
-      theta = theta.plus(phi.times(ufr.get(day - 1)).times((float) Math.pow(lambda, historyDays - day)));
+      sumPhi = sumPhi.plus(phi.times(phi.transpose()).times((float) Math.pow(LAMBDA, HISTORY_DAYS - day)));
+      theta = theta.plus(phi.times(ufr.get(day - 1)).times((float) Math.pow(LAMBDA, HISTORY_DAYS - day)));
     }
     P = new Matrix(sumPhi);
 
