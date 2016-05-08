@@ -26,9 +26,11 @@ final class AsdfLeader
    * @throws RemoteException
    * @throws NotBoundException
    */
-  private Matrix theta;
-  private Matrix P;
-  private Matrix phi;
+  private Matrix theta = new Matrix(2, 1);
+  private Matrix P = new Matrix(2, 2);
+  private Matrix phi = new Matrix(2, 1);
+  private int steps;
+  private int startDay = 101;
   private float lambda = (float) 0.96;
   private int historyDays = 100;
   ArrayList<Float> ul = new ArrayList<>();
@@ -37,9 +39,6 @@ final class AsdfLeader
   AsdfLeader()
       throws RemoteException, NotBoundException {
     super(PlayerType.LEADER, "AsdfLeader");
-    theta = new Matrix(2,1);
-    P = new Matrix(2,2);
-    phi = new Matrix(2,1);
   }
 
   /**
@@ -54,7 +53,6 @@ final class AsdfLeader
   public void checkConnection()
       throws RemoteException {
     super.checkConnection();
-    //TO DO: delete the line above and put your own code here
   }
 
   /**
@@ -68,7 +66,6 @@ final class AsdfLeader
   public void goodbye()
       throws RemoteException {
     super.goodbye();
-    //TO DO: delete the line above and put your own exit code here
   }
 
   /**
@@ -83,28 +80,27 @@ final class AsdfLeader
   public void startSimulation(int p_steps)
       throws RemoteException {
     super.startSimulation(p_steps);
-    //TO DO: delete the line above and put your own initialization code here
+
+    ul.clear();
+    ufr.clear();
+    steps = p_steps;
+
+    m_platformStub.log(PlayerType.LEADER, "startDay: " + startDay + " / steps: " + steps);
 
     m_platformStub.log(PlayerType.LEADER, "step: " + p_steps);
 
-      for (int i = 1; i <= 100; i++) {
-          Record l_newRecord = m_platformStub.query(PlayerType.LEADER, i);
+    for (int i = 1; i <= historyDays; i++) {
+      Record l_newRecord = m_platformStub.query(PlayerType.LEADER, i);
 
-          ul.add(l_newRecord.m_leaderPrice);
-          ufr.add(l_newRecord.m_followerPrice);
-      }
+      ul.add(l_newRecord.m_leaderPrice);
+      ufr.add(l_newRecord.m_followerPrice);
+    }
 
-
-//      float value_of_b = b(ul, ufr);
-//      m_platformStub.log(PlayerType.LEADER, "ul size: " + ul.size());
-//      m_platformStub.log(PlayerType.LEADER, "a : " + a(ul, ufr) + " b: " + value_of_b);
-//      if (value_of_b > 3.33) m_platformStub.log(PlayerType.LEADER, "Warning Warning!! b is " + value_of_b);
     initialCondition();
 
-      float maximisation = maximisation(thetaToReaction().getA(), thetaToReaction().getB());
+    float maximisation = maximisation(thetaToReaction().getA(), thetaToReaction().getB());
 
-      m_platformStub.log(PlayerType.LEADER, "training ul: " + maximisation);
-
+    m_platformStub.log(PlayerType.LEADER, "startSimulation maximisation: " + maximisation);
   }
 
   /**
@@ -118,18 +114,17 @@ final class AsdfLeader
   public void endSimulation()
       throws RemoteException {
 
-    Record l_newRecord = null;
-    int startDay = 101;
-    int endDay = 130;
+    int endDay = startDay + steps;
 
     float sumLeader = 0;
-    // float sumFollower = 0;
 
     for (int day = startDay; day < endDay; day++) {
-      l_newRecord = m_platformStub.query(PlayerType.FOLLOWER, day);
+      Record l_newRecord = m_platformStub.query(PlayerType.FOLLOWER, day);
+
+      m_platformStub.log(PlayerType.LEADER, "day " + day + " / leader price: " + l_newRecord.m_leaderPrice + " / " +
+          "follower price: " + l_newRecord.m_followerPrice);
 
       sumLeader += (l_newRecord.m_leaderPrice - 1) * sl(l_newRecord.m_leaderPrice, l_newRecord.m_followerPrice);
-      // sumFollower += (l_newRecord.m_followerPrice - 1) * sl(l_newRecord.m_leaderPrice, l_newRecord.m_followerPrice);
     }
 
     m_platformStub.log(PlayerType.LEADER, "sumLeader: " + sumLeader);
@@ -146,9 +141,8 @@ final class AsdfLeader
   public void proceedNewDay(int p_date)
       throws RemoteException {
 
-    if(p_date!=101)
-    {
-      Record l_newRecord = m_platformStub.query(PlayerType.LEADER, p_date-1);
+    if (p_date != startDay) {
+      Record l_newRecord = m_platformStub.query(PlayerType.LEADER, p_date - 1);
       RLSUpdate(l_newRecord.m_leaderPrice, l_newRecord.m_followerPrice);
     }
 
@@ -157,45 +151,46 @@ final class AsdfLeader
     m_platformStub.log(PlayerType.LEADER, "new ul: " + maximisation);
     m_platformStub.publishPrice(PlayerType.LEADER, maximisation);
 
-//    for (int i = p_date-30; i < p_date; i++) {
-//
-//
-//      ul.add(l_newRecord.m_leaderPrice);
-//      ufr.add(l_newRecord.m_followerPrice);
-//    }
 
-//    float value_of_b = b(ul, ufr);
-//    m_platformStub.log(PlayerType.LEADER, "ul size: " + ul.size());
-//    m_platformStub.log(PlayerType.LEADER, "a : " + a(ul, ufr) + " b: " + value_of_b);
-//    if (value_of_b > 3.33) m_platformStub.log(PlayerType.LEADER, "Warning Warning!! b is " + value_of_b);
+    /* Weighted Ordinary Least Square Method with Sliding window approach.
 
-//    float forget = (float) 0.95;
-//    float sigma = 100;
-//
-//    ArrayList<Float> P = new ArrayList<>();
-//    ArrayList<Float> w = new ArrayList<>();
-//    ArrayList<Float> a = new ArrayList<>();
-//    ArrayList<Float> g = new ArrayList<>();
-//
-//    P.add(0, 1/sigma * 1);
-//    w.add(0, (float) 0);
-//    a.add(0, (float) 0);
-//    g.add(0, (float) 0);
-//
-//
-//    for(int n=1; n<=ul.size(); n++)
-//    {
-//      //ul and ufr n-1 operation is because of arraylist starting index
-//      a.add(n, ufr.get(n-1) - ul.get(n-1) * w.get(n-1));
-//      g.add(n, P.get(n-1)*ul.get(n-1)*(1/(forget + ul.get(n-1)*P.get(n-1)*ul.get(n-1))));
-//      P.add(n, 1/forget * P.get(n-1) - g.get(n)*ul.get(n-1)*(1/forget)*P.get(n-1));
-//      w.add(n, w.get(n-1) + a.get(n) * g.get(n));
-//    }
-//    float delta = w.get(ul.size()) - w.get(ul.size()-1);
-//    float newPrice = maximisation + delta;
-//    float maximisation = maximisation(a(ul, ufr), b(ul, ufr));
+    for (int i = p_date-30; i < p_date; i++) {
+      ul.add(l_newRecord.m_leaderPrice);
+      ufr.add(l_newRecord.m_followerPrice);
+    }
+
+    float value_of_b = b(ul, ufr);
+    m_platformStub.log(PlayerType.LEADER, "ul size: " + ul.size());
+    m_platformStub.log(PlayerType.LEADER, "a : " + a(ul, ufr) + " b: " + value_of_b);
+    if (value_of_b > 3.33) m_platformStub.log(PlayerType.LEADER, "Warning Warning!! b is " + value_of_b);
+
+    float forget = (float) 0.95;
+    float sigma = 100;
+
+    ArrayList<Float> P = new ArrayList<>();
+    ArrayList<Float> w = new ArrayList<>();
+    ArrayList<Float> a = new ArrayList<>();
+    ArrayList<Float> g = new ArrayList<>();
+
+    P.add(0, 1/sigma * 1);
+    w.add(0, (float) 0);
+    a.add(0, (float) 0);
+    g.add(0, (float) 0);
+
+
+    for(int n=1; n<=ul.size(); n++)
+    {
+      //ul and ufr n-1 operation is because of arraylist starting index
+      a.add(n, ufr.get(n-1) - ul.get(n-1) * w.get(n-1));
+      g.add(n, P.get(n-1)*ul.get(n-1)*(1/(forget + ul.get(n-1)*P.get(n-1)*ul.get(n-1))));
+      P.add(n, 1/forget * P.get(n-1) - g.get(n)*ul.get(n-1)*(1/forget)*P.get(n-1));
+      w.add(n, w.get(n-1) + a.get(n) * g.get(n));
+    }
+    float delta = w.get(ul.size()) - w.get(ul.size()-1);
+    float newPrice = maximisation + delta;
+    float maximisation = maximisation(a(ul, ufr), b(ul, ufr));
+    */
   }
-
 
 
   public static void main(final String[] p_args)
@@ -207,10 +202,10 @@ final class AsdfLeader
 
     Matrix sumPhi = new Matrix(2, 2);
     for (int day = 1; day <= historyDays; day++) {
-      phi = this.assignPhi(ul.get(day-1));
+      phi = this.assignPhi(ul.get(day - 1));
 
       sumPhi = sumPhi.plus(phi.times(phi.transpose()).times((float) Math.pow(lambda, historyDays - day)));
-      theta = theta.plus(phi.times(ufr.get(day-1)).times((float) Math.pow(lambda, historyDays - day)));
+      theta = theta.plus(phi.times(ufr.get(day - 1)).times((float) Math.pow(lambda, historyDays - day)));
     }
     P = new Matrix(sumPhi);
 
@@ -218,18 +213,18 @@ final class AsdfLeader
   }
 
   private Matrix assignPhi(float v) {
-    Matrix A = new Matrix(2,1);
-    A.data[0][0]= 1;
+    Matrix A = new Matrix(2, 1);
+    A.data[0][0] = 1;
     A.data[1][0] = v;
 
     return A;
   }
 
-  private ReactionFunction thetaToReaction(){
+  private ReactionFunction thetaToReaction() {
     return new ReactionFunction(theta.data[0][0], theta.data[1][0]);
   }
 
-  public void RLSUpdate(float newUl, float newUf){
+  public void RLSUpdate(float newUl, float newUf) {
     // Updated Theta = Old Theta + L_T+1 * [y(T+1) - Fi^ti[X(T+1)] * Theta_T]
 
     phi = this.assignPhi(newUl);
@@ -301,7 +296,7 @@ final class AsdfLeader
 
     float sum_ul_power_two = 0;
     for (int t = 0; t < T; t++) {
-      sum_ul_power_two += Math.pow(ul.get(t), 2) ;
+      sum_ul_power_two += Math.pow(ul.get(t), 2);
     }
 
     float mexrec = T * sum_ul_power_two - (float) Math.pow(sum_ul, 2);
