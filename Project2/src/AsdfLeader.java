@@ -149,6 +149,7 @@ final class AsdfLeader
   private int START_DAY = 101;
   private float LAMBDA = 0.96F;
   private int HISTORY_DAYS = 100;
+  private int DIMENSION = 2;
 
   /* Ordinary Least Square Method */
 
@@ -270,18 +271,17 @@ final class AsdfLeader
   }
 
   private void RLSInitialize() throws RemoteException {
-    theta = new Matrix(2, 1);
-    tempTheta = new Matrix(2, 1);
-    P = new Matrix(2, 2);
-    phi = new Matrix(2, 1);
+    theta = new Matrix(DIMENSION, 1);
+    tempTheta = new Matrix(DIMENSION, 1);
+    P = new Matrix(DIMENSION, DIMENSION);
+    phi = new Matrix(DIMENSION, 1);
 
-    Matrix sumPhi = new Matrix(2, 2);
+    Matrix sumPhi = new Matrix(DIMENSION, DIMENSION);
     float reactY;
     float approxX;
     float y;
     double ySubReactY = 0;
     double RMSE;
-    int historyDays = 100;
 
     float ySubReactYDivideY = 0;
     double MAPE;
@@ -293,36 +293,35 @@ final class AsdfLeader
       tempTheta = tempTheta.plus(phi.times(ufr.get(day - 1)).times((float) Math.pow(LAMBDA, HISTORY_DAYS - day)));
 
       P = new Matrix(sumPhi);
+
       theta = P.invert().times(tempTheta);
 
-      if (day > 1) {
+      System.out.println("P");
+      System.out.println(P.invert().data[0][0]);
+      System.out.println(P.invert().data[1][0]);
+      System.out.println(P.invert().data[0][1]);
+      System.out.println(P.invert().data[1][1]);
+
+
+//      if (day > 1) {
         approxX = maximisation(thetaToReaction().getA(), thetaToReaction().getB());
         reactY = thetaToReaction().getA() + thetaToReaction().getB() * approxX;
         Record l_newRecord = m_platformStub.query(PlayerType.LEADER, day);
         y = l_newRecord.m_followerPrice;
-
-        System.out.println("reactY: " + reactY + " " + " y: " + y);
-
         ySubReactY += Math.pow(Math.abs(y - reactY), 2);
-
         ySubReactYDivideY += Math.abs((y - reactY) / y);
-
-        System.out.println(ySubReactY);
-      }
-
-      System.out.println("y - react y: " + ySubReactY);
-      RMSE = Math.sqrt(((double) 1 / (double) historyDays) * ySubReactY);
-      MAPE = ((double) 1 / (double) historyDays) * ySubReactYDivideY;
-
-      System.out.println("RMSE: " + RMSE + " MAPE: " + MAPE);
-
+//      }
     }
+    RMSE = Math.sqrt(((double) 1 / (double) (HISTORY_DAYS - 1)) * ySubReactY);
+    MAPE = ((double) 1 / (double) (HISTORY_DAYS - 1)) * ySubReactYDivideY;
+    m_platformStub.log(PlayerType.LEADER, "RMSE: " + RMSE + " MAPE: " + MAPE);
   }
 
   private Matrix assignPhi(float v) {
-    Matrix A = new Matrix(2, 1);
-    A.data[0][0] = 1;
-    A.data[1][0] = v;
+    Matrix A = new Matrix(DIMENSION, 1);
+    for (int d = 0; d < DIMENSION; d++) {
+      A.data[d][0] = (float) Math.pow(v, d);
+    }
 
     return A;
   }
