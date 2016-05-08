@@ -5,23 +5,23 @@ import java.util.Arrays;
 final public class Matrix {
   public final int M;             // number of rows
   public final int N;             // number of columns
-  public final float[][] data;   // M-by-N array
+  public final double[][] data;   // M-by-N array
 
   // create M-by-N matrix of 0's
   public Matrix(int M, int N) {
     this.M = M;
     this.N = N;
-    data = new float[M][N];
+    data = new double[M][N];
     for (int i = 0; i < M; i++)
       for (int j = 0; j < N; j++)
-        this.data[i][j] = 0;
+        this.data[i][j] = 0.0;
   }
 
   // create matrix based on 2d array
-  public Matrix(float[][] data) {
+  public Matrix(double[][] data) {
     M = data.length;
     N = data[0].length;
-    this.data = new float[M][N];
+    this.data = new double[M][N];
     for (int i = 0; i < M; i++)
       for (int j = 0; j < N; j++)
         this.data[i][j] = data[i][j];
@@ -35,7 +35,7 @@ final public class Matrix {
     Matrix A = new Matrix(M, N);
     for (int i = 0; i < M; i++)
       for (int j = 0; j < N; j++)
-        A.data[i][j] = (float) Math.random();
+        A.data[i][j] = Math.random();
     return A;
   }
 
@@ -49,18 +49,17 @@ final public class Matrix {
 
   public Matrix invert() {
     Matrix A = new Matrix(M,N);
-    float denominator = (this.data[0][0] * this.data[1][1] - this.data[1][0] * this.data[0][1]);
+    double denominator = (this.data[0][0] * this.data[1][1] - this.data[1][0] * this.data[0][1]);
     A.data[0][0] = this.data[1][1] / denominator;
     A.data[1][1] = this.data[0][0] / denominator;
     A.data[0][1] = -this.data[0][1] / denominator;
     A.data[1][0] = -this.data[1][0] / denominator;
-
     return A;
   }
 
   // swap rows i and j
   private void swap(int i, int j) {
-    float[] temp = data[i];
+    double[] temp = data[i];
     data[i] = data[j];
     data[j] = temp;
   }
@@ -85,7 +84,7 @@ final public class Matrix {
     return C;
   }
 
-  public Matrix plus(float B) {
+  public Matrix plus(double B) {
     Matrix A = this;
     Matrix C = new Matrix(M, N);
     for (int i = 0; i < M; i++)
@@ -106,7 +105,7 @@ final public class Matrix {
     return C;
   }
 
-  public Matrix divide(float B) {
+  public Matrix divide(double B) {
     Matrix A = this;
     Matrix C = new Matrix(M, N);
     for (int i = 0; i < M; i++)
@@ -137,7 +136,7 @@ final public class Matrix {
     return C;
   }
 
-  public Matrix times(float B) {
+  public Matrix times(double B) {
     Matrix A = this;
     Matrix C = new Matrix(M, N);
     for (int i = 0; i < M; i++)
@@ -209,46 +208,46 @@ final public class Matrix {
 
   // test client
   public static void main(String[] args) {
-    float[][] d = { { 1, 2, 3 }, { 4, 5, 6 }, { 9, 1, 3} };
-    Matrix D = new Matrix(d);
-    D.show();
-    System.out.println();
-
-    Matrix A = Matrix.random(5, 5);
-    A.show();
-    System.out.println();
-
-    A.swap(1, 2);
-    A.show();
-    System.out.println();
-
-    Matrix B = A.transpose();
-    B.show();
-    System.out.println();
-
-    Matrix C = Matrix.identity(5);
-    C.show();
-    System.out.println();
-
-    A.plus(B).show();
-    System.out.println();
-
-    B.times(A).show();
-    System.out.println();
-
-    // shouldn't be equal since AB != BA in general
-    System.out.println(A.times(B).eq(B.times(A)));
-    System.out.println();
-
-    Matrix b = Matrix.random(5, 1);
-    b.show();
-    System.out.println();
-
-    Matrix x = A.solve(b);
-    x.show();
-    System.out.println();
-
-    A.times(x).show();
+//    float[][] d = { { 1, 2, 3 }, { 4, 5, 6 }, { 9, 1, 3} };
+//    Matrix D = new Matrix(d);
+//    D.show();
+//    System.out.println();
+//
+//    Matrix A = Matrix.random(5, 5);
+//    A.show();
+//    System.out.println();
+//
+//    A.swap(1, 2);
+//    A.show();
+//    System.out.println();
+//
+//    Matrix B = A.transpose();
+//    B.show();
+//    System.out.println();
+//
+//    Matrix C = Matrix.identity(5);
+//    C.show();
+//    System.out.println();
+//
+//    A.plus(B).show();
+//    System.out.println();
+//
+//    B.times(A).show();
+//    System.out.println();
+//
+//    // shouldn't be equal since AB != BA in general
+//    System.out.println(A.times(B).eq(B.times(A)));
+//    System.out.println();
+//
+//    Matrix b = Matrix.random(5, 1);
+//    b.show();
+//    System.out.println();
+//
+//    Matrix x = A.solve(b);
+//    x.show();
+//    System.out.println();
+//
+//    A.times(x).show();
 
   }
 

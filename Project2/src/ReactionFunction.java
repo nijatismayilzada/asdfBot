@@ -1,25 +1,25 @@
 public class ReactionFunction {
-  private float a;
-  private float b;
+  private double a;
+  private double b;
 
-  public ReactionFunction(float a, float b) {
+  public ReactionFunction(double a, double b) {
     this.a = a;
     this.b = b;
   }
 
-  public float getA() {
+  public double getA() {
     return a;
   }
 
-  public void setA(float a) {
+  public void setA(double a) {
     this.a = a;
   }
 
-  public float getB() {
+  public double getB() {
     return b;
   }
 
-  public void setB(float b) {
+  public void setB(double b) {
     this.b = b;
   }
 }
