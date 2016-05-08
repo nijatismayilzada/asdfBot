@@ -16,6 +16,13 @@ import java.util.ArrayList;
  */
 final class AsdfLeader
     extends PlayerImpl {
+
+  private int WINDOW_SIZE = 20;
+  private int START_DAY = 101;
+  private double LAMBDA = 0.99;
+  private int HISTORY_DAYS = 100;
+  private int DIMENSION = 3;
+
   /**
    * In the constructor, you need to call the constructor
    * of PlayerImpl in the first line, so that you don't need to
@@ -88,10 +95,6 @@ final class AsdfLeader
     }
 
     RLSInitialize();
-
-    double maximisation = maximisation(thetaToReaction().getA(), thetaToReaction().getB());
-
-    m_platformStub.log(PlayerType.LEADER, "startSimulation maximisation: " + maximisation);
   }
 
   /**
@@ -144,12 +147,6 @@ final class AsdfLeader
       throws RemoteException, NotBoundException {
     new AsdfLeader();
   }
-
-  private int WINDOW_SIZE = 20;
-  private int START_DAY = 101;
-  private double LAMBDA = 0.99;
-  private int HISTORY_DAYS = 100;
-  private int DIMENSION = 2;
 
   /* Ordinary Least Square Method */
 
@@ -230,6 +227,20 @@ final class AsdfLeader
     return (3 + 0.3 * (a - b)) / (2 - 0.6 * b);
   }
 
+  private double maximisation(double a, double b, double c) {
+    double val_max = 0;
+    double uu_max = 1;
+    for (double uu = 1; uu < 3.0; uu = uu + 0.001) {
+      double magic = (uu - 1) * (2 - uu + 0.3 * (a + b * uu + c * uu * uu));
+      if (magic > val_max) {
+        val_max = magic;
+        uu_max = uu;
+      }
+    }
+    return uu_max;
+  }
+
+
   private double sl(double ul, double uf) {
     return (2 - ul + 0.3 * uf);
   }
@@ -251,7 +262,12 @@ final class AsdfLeader
       RLSUpdate(l_newRecord.m_leaderPrice, l_newRecord.m_followerPrice);
     }
 
-    return maximisation(thetaToReaction().getA(), thetaToReaction().getB());
+    if (DIMENSION == 2) {
+      return maximisation(thetaToReaction().getA(), thetaToReaction().getB());
+    }
+    else {
+      return maximisation(thetaToReaction().getA(), thetaToReaction().getB(), thetaToReaction().getC());
+    }
   }
 
   private void RLSUpdate(double newUl, double newUf) {
@@ -296,8 +312,18 @@ final class AsdfLeader
       theta = P.invert().times(tempTheta);
 
       if (day > 1) {
-        approxX = maximisation(thetaToReaction().getA(), thetaToReaction().getB());
-        reactY = thetaToReaction().getA() + thetaToReaction().getB() * approxX;
+
+        if (DIMENSION == 2) {
+          approxX = maximisation(thetaToReaction().getA(), thetaToReaction().getB());
+          reactY = thetaToReaction().getA() + thetaToReaction().getB() * approxX;
+        }
+        else {
+          approxX = maximisation(thetaToReaction().getA(), thetaToReaction().getB(), thetaToReaction().getC());
+          reactY = thetaToReaction().getA() + thetaToReaction().getB() * approxX + thetaToReaction().getC() * Math
+              .pow(approxX, 2);
+        }
+
+
         Record l_newRecord = m_platformStub.query(PlayerType.LEADER, day);
         y = l_newRecord.m_followerPrice;
         ySubReactY += Math.pow(Math.abs(y - reactY), 2);
@@ -319,7 +345,8 @@ final class AsdfLeader
   }
 
   private ReactionFunction thetaToReaction() {
-    return new ReactionFunction(theta.data[0][0], theta.data[1][0]);
+    if (DIMENSION == 2) return new ReactionFunction(theta.data[0][0], theta.data[1][0]);
+    else return new ReactionFunction(theta.data[0][0], theta.data[1][0], theta.data[2][0]);
   }
 
 
