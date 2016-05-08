@@ -132,8 +132,8 @@ final class AsdfLeader
   public void proceedNewDay(int p_date)
       throws RemoteException {
 
-//    float publishPrice = RLS(p_date);
-    float publishPrice = OLS(p_date, 30, 0.96F);
+    float publishPrice = RLS(p_date);
+//    float publishPrice = OLS(p_date, 30, 0.96F);
 
     m_platformStub.log(PlayerType.LEADER, "publishPrice: " + publishPrice);
     m_platformStub.publishPrice(PlayerType.LEADER, publishPrice);
@@ -248,9 +248,9 @@ final class AsdfLeader
 
   /* Recursive Least Square Method */
 
-  private Matrix theta = new Matrix(2, 1);
-  private Matrix P = new Matrix(2, 2);
-  private Matrix phi = new Matrix(2, 1);
+  private Matrix theta;
+  private Matrix P;
+  private Matrix phi;
   private int steps;
   private int startDay = 101;
   private float lambda = (float) 0.96;
@@ -284,6 +284,9 @@ final class AsdfLeader
   }
 
   private void RLSInitialize() throws RemoteException {
+    theta = new Matrix(2, 1);
+    P = new Matrix(2, 2);
+    phi = new Matrix(2, 1);
 
     Matrix sumPhi = new Matrix(2, 2);
     for (int day = 1; day <= historyDays; day++) {
