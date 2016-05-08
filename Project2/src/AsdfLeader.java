@@ -132,7 +132,8 @@ final class AsdfLeader
   public void proceedNewDay(int p_date)
       throws RemoteException {
 
-    float publishPrice = RLS(p_date);
+//    float publishPrice = RLS(p_date);
+    float publishPrice = OLS(p_date, 30, 0.96F);
 
     m_platformStub.log(PlayerType.LEADER, "publishPrice: " + publishPrice);
     m_platformStub.publishPrice(PlayerType.LEADER, publishPrice);
