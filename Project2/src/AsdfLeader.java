@@ -132,8 +132,8 @@ final class AsdfLeader
   public void proceedNewDay(int p_date)
       throws RemoteException {
 
-//    float publishPrice = RLS(p_date);
-    float publishPrice = OLS(p_date);
+    float publishPrice = RLS(p_date);
+//    float publishPrice = OLS(p_date);
 
     m_platformStub.log(PlayerType.LEADER, "publishPrice: " + publishPrice);
     m_platformStub.publishPrice(PlayerType.LEADER, publishPrice);
@@ -237,6 +237,7 @@ final class AsdfLeader
   /* Recursive Least Square Method */
 
   private Matrix theta;
+  private Matrix tempTheta;
   private Matrix P;
   private Matrix phi;
   private int steps;
@@ -270,19 +271,52 @@ final class AsdfLeader
 
   private void RLSInitialize() throws RemoteException {
     theta = new Matrix(2, 1);
+    tempTheta = new Matrix(2, 1);
     P = new Matrix(2, 2);
     phi = new Matrix(2, 1);
 
     Matrix sumPhi = new Matrix(2, 2);
+    float reactY;
+    float approxX;
+    float y;
+    double ySubReactY = 0;
+    double RMSE;
+    int historyDays = 100;
+
+    float ySubReactYDivideY = 0;
+    double MAPE;
+
     for (int day = 1; day <= HISTORY_DAYS; day++) {
       phi = this.assignPhi(ul.get(day - 1));
 
       sumPhi = sumPhi.plus(phi.times(phi.transpose()).times((float) Math.pow(LAMBDA, HISTORY_DAYS - day)));
-      theta = theta.plus(phi.times(ufr.get(day - 1)).times((float) Math.pow(LAMBDA, HISTORY_DAYS - day)));
-    }
-    P = new Matrix(sumPhi);
+      tempTheta = tempTheta.plus(phi.times(ufr.get(day - 1)).times((float) Math.pow(LAMBDA, HISTORY_DAYS - day)));
 
-    theta = P.invert().times(theta);
+      P = new Matrix(sumPhi);
+      theta = P.invert().times(tempTheta);
+
+      if (day > 1) {
+        approxX = maximisation(thetaToReaction().getA(), thetaToReaction().getB());
+        reactY = thetaToReaction().getA() + thetaToReaction().getB() * approxX;
+        Record l_newRecord = m_platformStub.query(PlayerType.LEADER, day);
+        y = l_newRecord.m_followerPrice;
+
+        System.out.println("reactY: " + reactY + " " + " y: " + y);
+
+        ySubReactY += Math.pow(Math.abs(y - reactY), 2);
+
+        ySubReactYDivideY += Math.abs((y - reactY) / y);
+
+        System.out.println(ySubReactY);
+      }
+
+      System.out.println("y - react y: " + ySubReactY);
+      RMSE = Math.sqrt(((double) 1 / (double) historyDays) * ySubReactY);
+      MAPE = ((double) 1 / (double) historyDays) * ySubReactYDivideY;
+
+      System.out.println("RMSE: " + RMSE + " MAPE: " + MAPE);
+
+    }
   }
 
   private Matrix assignPhi(float v) {
