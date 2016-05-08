@@ -17,11 +17,11 @@ import java.util.ArrayList;
 final class AsdfLeader
     extends PlayerImpl {
 
-  private int WINDOW_SIZE = 20;
+  private int WINDOW_SIZE = 100;
   private int START_DAY = 101;
   private double LAMBDA = 0.99;
   private int HISTORY_DAYS = 100;
-  private int DIMENSION = 3;
+  private int DIMENSION = 2;
 
   /**
    * In the constructor, you need to call the constructor
@@ -265,11 +265,6 @@ final class AsdfLeader
       return maximisation(thetaToReaction().getA(), thetaToReaction().getB());
     }
     else {
-      System.out.println("thetaToReaction()");
-      System.out.println(thetaToReaction().getA());
-      System.out.println(thetaToReaction().getB());
-      System.out.println(thetaToReaction().getC());
-
       return maximisation(thetaToReaction().getA(), thetaToReaction().getB(), thetaToReaction().getC());
     }
   }
