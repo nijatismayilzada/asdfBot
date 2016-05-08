@@ -14,12 +14,12 @@ import java.util.ArrayList;
  *
  * @author Xin
  */
-final class AsdfLeader
+final class AsdfLeaderMk3
     extends PlayerImpl {
 
   private int WINDOW_SIZE = 100;
   private int START_DAY = 101;
-  private double LAMBDA = 0.99;
+  private double LAMBDA = 1;
   private int HISTORY_DAYS = 100;
   private int DIMENSION = 2;
 
@@ -34,9 +34,9 @@ final class AsdfLeader
    * @throws NotBoundException
    */
 
-  AsdfLeader()
+  AsdfLeaderMk3()
       throws RemoteException, NotBoundException {
-    super(PlayerType.LEADER, "AsdfLeader");
+    super(PlayerType.LEADER, "AsdfLeaderMk1");
   }
 
   /**
@@ -135,8 +135,8 @@ final class AsdfLeader
   public void proceedNewDay(int p_date)
       throws RemoteException {
 
-    double publishPrice = RLS(p_date);
-//    double publishPrice = OLS(p_date);
+//    double publishPrice = RLS(p_date);
+    double publishPrice = OLS(p_date);
 
     m_platformStub.log(PlayerType.LEADER, "publishPrice: " + publishPrice);
     m_platformStub.publishPrice(PlayerType.LEADER, (float) publishPrice);
@@ -145,7 +145,7 @@ final class AsdfLeader
 
   public static void main(final String[] p_args)
       throws RemoteException, NotBoundException {
-    new AsdfLeader();
+    new AsdfLeaderMk3();
   }
 
   /* Ordinary Least Square Method */
